@@ -7,3 +7,4 @@ taller.patches.v0_4.proyecto_por_orden
 taller.patches.v0_5.agencia_como_cliente
 taller.patches.v0_6.proyecto_sin_cliente
 taller.patches.v0_7.valuacion
+taller.patches.v0_8.tipo_de_orden

@@ -20,7 +20,9 @@ frappe.ui.form.on("Orden Taller", {
 		frm.trigger("botones_erpnext");
 		frm.set_df_property("conceptos", "read_only", frm.doc.orden_venta ? 1 : 0);
 		frm.set_df_property("cliente", "label", frm.doc.tipo_flujo === "Agencia" ? __("Agencia (cliente)") : __("Cliente"));
-		if (frm.doc.tipo_flujo) {
+		if (frm.doc.tipo_orden === "Mecánica") {
+			frm.page.set_indicator(`${__("Mecánica")} · ${frm.doc.workflow_state || __("Nueva")}`, "orange");
+		} else if (frm.doc.tipo_flujo) {
 			frm.page.set_indicator(
 				`${frm.doc.tipo_flujo} · ${frm.doc.paso_actual || "Nueva"}`,
 				COLORES_TIPO[frm.doc.tipo_flujo] || "gray"
@@ -31,9 +33,18 @@ frappe.ui.form.on("Orden Taller", {
 	tipo_flujo(frm) {
 		frm.trigger("refresh");
 	},
+	tipo_orden(frm) {
+		frm.trigger("refresh");
+	},
 	dibujar_flujo(frm) {
 		const $wrapper = frm.get_field("flujo_html").$wrapper;
 		const pasos = frm.doc.pasos || [];
+		if (frm.doc.tipo_orden && frm.doc.tipo_orden !== "Hojalatería y Pintura") {
+			$wrapper.html(
+				`<div class="text-muted small">${__("El flujo de pasos es de Hojalatería y Pintura; las órdenes de {0} no lo usan.", [frappe.utils.escape_html(frm.doc.tipo_orden)])}</div>`
+			);
+			return;
+		}
 		if (!pasos.length) {
 			$wrapper.html(
 				`<div class="text-muted small">${__("Elige el tipo de flujo y guarda la orden para ver sus pasos.")}</div>`
@@ -99,7 +110,7 @@ frappe.ui.form.on("Orden Taller", {
 		if (doc.valuacion) {
 			frm.add_custom_button(__("Valuación"), () => frappe.set_route("Form", "Valuacion Taller", doc.valuacion), __("Ver"));
 		}
-		if (!doc.valuacion_aprobada && doc.docstatus === 0) {
+		if (!doc.valuacion_aprobada && doc.docstatus === 0 && doc.tipo_orden === "Hojalatería y Pintura") {
 			frm.add_custom_button(
 				__("Valuación"),
 				() => frappe.new_doc("Valuacion Taller", { orden_taller: doc.name }),

@@ -22,6 +22,7 @@ from taller.flujo.configuracion import (
     ANULADO,
     CAMPO_ESTADO,
     CAMPO_PASOS,
+    CAMPO_TIPO_ORDEN,
     COMPLETADO,
     EN_PROCESO,
     ESTADO_CANCELADA,
@@ -30,6 +31,7 @@ from taller.flujo.configuracion import (
     HORAS_ESTIMADAS,
     paso_de_estado,
     sufijo_de_estado,
+    usa_flujo,
 )
 
 
@@ -37,7 +39,13 @@ def sincronizar_pasos(doc):
     anterior = doc.get_doc_before_save()
     destino = doc.get(CAMPO_ESTADO)
 
-    cambio_tipo = anterior and anterior.tipo_flujo != doc.tipo_flujo
+    # Solo Hojalatería y Pintura tiene pasos; otros tipos de orden (Mecánica) no
+    if not usa_flujo(doc):
+        doc.set(CAMPO_PASOS, [])
+        return
+
+    cambio_tipo = anterior and (anterior.tipo_flujo != doc.tipo_flujo
+                                or anterior.get(CAMPO_TIPO_ORDEN) != doc.get(CAMPO_TIPO_ORDEN))
     if doc.tipo_flujo and (not doc.get(CAMPO_PASOS)
                            or (cambio_tipo and destino in (None, "", ESTADO_INICIAL))):
         generar_pasos(doc)

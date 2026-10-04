@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 from taller.erp.costeo import (
@@ -9,6 +10,7 @@ from taller.erp.costeo import (
     registrar_mano_obra,
 )
 from taller.erp.documentos import calcular_conceptos, calcular_montos
+from taller.flujo.configuracion import CAMPO_TIPO_ORDEN, ESTADO_INICIAL
 from taller.flujo.pasos import sincronizar_pasos
 from taller.flujo.reglas import validar_reglas_transicion
 from taller.vehiculo.vin import revisar_vin
@@ -17,12 +19,21 @@ from taller.vehiculo.vin import revisar_vin
 class OrdenTaller(Document):
     def validate(self):
         self.company = self.company or frappe.defaults.get_user_default("Company")
+        self.validar_cambio_tipo_orden()
         revisar_vin(self)
         calcular_conceptos(self)
         calcular_montos(self)
         calcular_costeo(self)
         validar_reglas_transicion(self)
         sincronizar_pasos(self)
+
+    def validar_cambio_tipo_orden(self):
+        anterior = self.get_doc_before_save()
+        if (anterior and anterior.get(CAMPO_TIPO_ORDEN)
+                and anterior.get(CAMPO_TIPO_ORDEN) != self.get(CAMPO_TIPO_ORDEN)
+                and anterior.workflow_state not in (None, "", ESTADO_INICIAL)):
+            frappe.throw(_("El tipo de orden solo se puede cambiar mientras la orden está en {0}.")
+                         .format(ESTADO_INICIAL))
 
     def after_insert(self):
         crear_proyecto(self)

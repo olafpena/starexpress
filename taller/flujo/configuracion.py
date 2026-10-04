@@ -11,6 +11,10 @@ Este módulo es la ÚNICA fuente de verdad del workflow. Desde aquí se generan:
   * Permisos por rol
   * Reglas de transición de ejemplo (DocType "Regla Transicion Taller")
 
+El workflow es del tipo de orden "Hojalatería y Pintura": todas sus transiciones,
+salvo Cancelar y Reactivar, llevan la condición `doc.tipo_orden == "Hojalatería y
+Pintura"`, así que no aplica a otros tipos de orden (p. ej. Mecánica).
+
 Frappe solo permite UN workflow activo por DocType, así que los tres tipos
 (Agencia, Particular, Aseguradora) viven en el mismo workflow y se distinguen
 con el campo `tipo_flujo`: cada tipo tiene su propia secuencia en FLUJOS y las
@@ -22,7 +26,8 @@ Uso:
     bench --site <sitio> execute taller.flujo.configuracion.instalar --kwargs "{'reconstruir': True}"
 
 Con reconstruir=True se regeneran estados y transiciones, pero se CONSERVAN las
-condiciones que hayas escrito a mano en las transiciones desde el Desk.
+condiciones que hayas escrito a mano en las transiciones desde el Desk (se
+agregan con "and" a la condición generada).
 """
 
 from collections import OrderedDict
@@ -37,6 +42,15 @@ DOCTYPE_VALUACION = "Valuacion Taller"
 CAMPO_ESTADO = "workflow_state"
 CAMPO_PASO = "paso_actual"
 CAMPO_PASOS = "pasos"
+CAMPO_TIPO_ORDEN = "tipo_orden"
+
+# Tipos de orden. El workflow y la tabla de pasos son de TIPO_ORDEN_FLUJO.
+TIPO_ORDEN_FLUJO = "Hojalatería y Pintura"
+TIPO_ORDEN_MECANICA = "Mecánica"
+TIPOS_ORDEN = [TIPO_ORDEN_FLUJO, TIPO_ORDEN_MECANICA]
+CONDICION_TIPO_ORDEN = f'doc.{CAMPO_TIPO_ORDEN} == "{TIPO_ORDEN_FLUJO}"'
+# Acciones de la orden completa, disponibles para cualquier tipo de orden
+ACCIONES_GENERALES = ("Cancelar", "Reactivar")
 
 ROL_SUPERVISOR = "Jefe de Taller"
 ROL_RECEPCION = "Asesor de Servicio"
@@ -135,6 +149,11 @@ def estado(paso, sufijo):
     return f"{paso}{SEPARADOR}{sufijo}"
 
 
+def usa_flujo(doc):
+    """True si la orden sigue el workflow de Hojalatería y Pintura (sin tipo = sí)."""
+    return (doc.get(CAMPO_TIPO_ORDEN) or TIPO_ORDEN_FLUJO) == TIPO_ORDEN_FLUJO
+
+
 def paso_de_estado(nombre_estado):
     return (nombre_estado or "").split(SEPARADOR)[0]
 
@@ -225,6 +244,8 @@ def construir_transiciones():
     filas = []
 
     def agregar(origen, accion, destino, roles_permitidos, condicion=None):
+        if accion not in ACCIONES_GENERALES:
+            condicion = y(CONDICION_TIPO_ORDEN, condicion)
         for rol in OrderedDict.fromkeys(roles_permitidos):
             filas.append({
                 "state": origen,
@@ -494,8 +515,11 @@ def crear_workflow(reconstruir=False):
         wf.append("states", fila)
     for fila in construir_transiciones():
         clave = (fila["state"], fila["action"], fila["next_state"], fila["allowed"])
-        if clave in condiciones_previas:
-            fila["condition"] = condiciones_previas[clave]
+        previa = condiciones_previas.get(clave)
+        # Una condición previa que la generada ya incluye venía del generador; otra
+        # distinta la escribió alguien en el Desk y se conserva
+        if previa and previa not in (fila["condition"] or ""):
+            fila["condition"] = y(fila["condition"], previa)
         wf.append("transitions", fila)
 
     wf.save(ignore_permissions=True)

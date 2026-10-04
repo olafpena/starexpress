@@ -15,6 +15,12 @@ frappe.query_reports["Rentabilidad Orden Taller"] = {
 		},
 		{ fieldname: "hasta", label: __("Hasta"), fieldtype: "Date", default: frappe.datetime.get_today() },
 		{
+			fieldname: "tipo_orden",
+			label: __("Tipo de orden"),
+			fieldtype: "Select",
+			options: "\nHojalatería y Pintura\nMecánica",
+		},
+		{
 			fieldname: "tipo_flujo",
 			label: __("Tipo"),
 			fieldtype: "Select",

@@ -14,6 +14,16 @@ bench --site <sitio> install-app taller
 `after_install` crea: 13 roles, 37 Workflow States, 21 acciones, permisos, el workflow
 (140 transiciones) y 10 reglas de ejemplo.
 
+## Tipo de orden
+
+Cada orden es de **Hojalatería y Pintura** (predeterminado) o **Mecánica**. Todo el flujo
+de este README (workflow de 12 pasos, tabla de pasos, valuación y sus reglas) es de
+Hojalatería y Pintura: sus transiciones llevan la condición
+`doc.tipo_orden == "Hojalatería y Pintura"`. Las órdenes de Mecánica quedan en *Nueva*
+sin esos pasos (aún no tienen flujo propio), pero sí se cotizan, facturan, cobran y costean, y
+se pueden Cancelar y Reactivar. El tipo de orden solo se cambia mientras la orden está en
+*Nueva*.
+
 ## Pasos y estados
 
 Cada paso entra **En Proceso** y sale **Completado** o **Anulado** (paso omitido); desde
@@ -227,3 +237,15 @@ taller/
 ```
 
 Requiere ERPNext (Customer, Item, Quotation, Sales Order, Sales Invoice, Payment Entry).
+
+## Regresión
+
+`taller/tests/regresion.py` prueba de punta a punta sobre el sitio (tipo de orden,
+workflow, valuación, VIN, contabilidad de los tres tipos de flujo y costeo). Cada caso se
+revierte, así que no deja datos:
+
+```bash
+bench --site <sitio> execute taller.tests.regresion.correr --kwargs "{'pdf': '/ruta/VALUACION.pdf'}"
+```
+
+Sin `pdf` se omite el caso del PDF de Audatex.

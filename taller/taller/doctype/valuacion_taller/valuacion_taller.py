@@ -41,6 +41,10 @@ CAMPOS_VEHICULO = ["marca", "modelo", "anio", "color", "placas", "vin"]
 
 class ValuacionTaller(Document):
     def validate(self):
+        tipo_orden = frappe.db.get_value(DOCTYPE_ORDEN, self.orden_taller, "tipo_orden")
+        if tipo_orden and tipo_orden != "Hojalatería y Pintura":
+            frappe.throw(_("La valuación es parte del flujo de Hojalatería y Pintura; la orden {0} es de {1}.")
+                         .format(self.orden_taller, tipo_orden))
         # El VIN de Audatex lo captura la aseguradora o agencia: solo se advierte
         revisar_vin(self, estricto=self.origen != "Audatex")
         self.validar_unica()
