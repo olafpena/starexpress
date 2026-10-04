@@ -1,0 +1,80 @@
+{
+ "actions": [],
+ "creation": "2026-10-04 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "qty",
+  "uom",
+  "rate",
+  "amount"
+ ],
+ "fields": [
+  {
+   "fieldname": "item_code",
+   "label": "Artículo",
+   "fieldtype": "Link",
+   "options": "Item",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "item_name",
+   "label": "Descripción",
+   "fieldtype": "Data",
+   "fetch_from": "item_code.item_name",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "qty",
+   "label": "Cantidad",
+   "fieldtype": "Float",
+   "default": "1",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "uom",
+   "label": "Unidad",
+   "fieldtype": "Link",
+   "options": "UOM",
+   "fetch_from": "item_code.stock_uom",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "rate",
+   "label": "Precio",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "amount",
+   "label": "Importe",
+   "fieldtype": "Currency",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-04 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Concepto Orden Taller",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

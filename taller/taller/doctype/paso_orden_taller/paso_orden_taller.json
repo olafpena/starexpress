@@ -1,0 +1,95 @@
+{
+ "actions": [],
+ "creation": "2026-10-04 12:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "paso",
+  "estado",
+  "usuario",
+  "fecha_hora",
+  "horas_estimadas",
+  "horas_reales",
+  "inicio"
+ ],
+ "fields": [
+  {
+   "fieldname": "paso",
+   "label": "Paso",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "read_only": 1,
+   "bold": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "estado",
+   "label": "Estado",
+   "fieldtype": "Select",
+   "options": "\nEn Proceso\nCompletado\nAnulado",
+   "in_list_view": 1,
+   "read_only": 1,
+   "bold": 1,
+   "columns": 2,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "usuario",
+   "label": "Usuario",
+   "fieldtype": "Link",
+   "options": "User",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 2,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "fecha_hora",
+   "label": "Fecha y hora",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 2,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "horas_estimadas",
+   "label": "Hrs est.",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "columns": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "horas_reales",
+   "label": "Hrs reales",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "read_only": 1,
+   "columns": 1,
+   "precision": "2",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "inicio",
+   "label": "Inicio En Proceso",
+   "fieldtype": "Datetime",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-04 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Paso Orden Taller",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

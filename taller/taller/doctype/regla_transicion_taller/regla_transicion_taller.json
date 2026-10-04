@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-04 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "activo",
+  "descripcion",
+  "col_1",
+  "tipo_regla",
+  "prioridad",
+  "sec_alcance",
+  "tipo_flujo",
+  "paso",
+  "col_2",
+  "estado_origen",
+  "estado_destino",
+  "sec_condicion",
+  "condicion",
+  "mensaje"
+ ],
+ "fields": [
+  {
+   "fieldname": "activo",
+   "fieldtype": "Check",
+   "label": "Activa",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "descripcion",
+   "fieldtype": "Data",
+   "label": "Descripción",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tipo_regla",
+   "fieldtype": "Select",
+   "label": "Si no se cumple",
+   "options": "Bloquear\nAdvertir",
+   "default": "Bloquear",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "prioridad",
+   "fieldtype": "Int",
+   "label": "Prioridad",
+   "default": "10",
+   "description": "Menor número = se evalúa primero."
+  },
+  {
+   "fieldname": "sec_alcance",
+   "fieldtype": "Section Break",
+   "label": "¿Cuándo aplica?"
+  },
+  {
+   "fieldname": "tipo_flujo",
+   "fieldtype": "Select",
+   "label": "Tipo de flujo",
+   "options": "Todos\nAgencia\nParticular\nAseguradora",
+   "default": "Todos",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "paso",
+   "fieldtype": "Select",
+   "label": "Paso",
+   "options": "Todos\nRecolección\nRecepción\nCarrocería\nPreparación\nPintura\nArmado\nPulido\nControl de calidad\nLavado\nEntrega\nCobro\nFacturación",
+   "default": "Todos",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Aplica al entrar a cualquier estado de este paso (si no se indica Estado destino)."
+  },
+  {
+   "fieldname": "col_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "estado_origen",
+   "fieldtype": "Link",
+   "label": "Estado origen",
+   "options": "Workflow State",
+   "description": "Opcional. Solo si la orden viene de este estado."
+  },
+  {
+   "fieldname": "estado_destino",
+   "fieldtype": "Link",
+   "label": "Estado destino",
+   "options": "Workflow State",
+   "description": "Opcional. Si se indica, tiene prioridad sobre Paso."
+  },
+  {
+   "fieldname": "sec_condicion",
+   "fieldtype": "Section Break",
+   "label": "Condición"
+  },
+  {
+   "fieldname": "condicion",
+   "fieldtype": "Code",
+   "label": "Condición (debe ser verdadera)",
+   "options": "Python",
+   "reqd": 1,
+   "description": "Expresión Python. Variables: doc, anterior, origen, destino. Ej.: doc.numero_siniestro and doc.autorizacion_aseguradora"
+  },
+  {
+   "fieldname": "mensaje",
+   "fieldtype": "Small Text",
+   "label": "Mensaje si no se cumple",
+   "reqd": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-04 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Regla Transicion Taller",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:RTT-{#####}",
+ "naming_rule": "Expression",
+ "title_field": "descripcion",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  }
+ ]
+}

@@ -1,0 +1,659 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-04 10:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_general",
+  "tipo_flujo",
+  "paso_actual",
+  "workflow_state",
+  "col_general",
+  "fecha_ingreso",
+  "company",
+  "requiere_recoleccion",
+  "direccion_recoleccion",
+  "sec_flujo",
+  "flujo_html",
+  "pasos",
+  "sec_cliente",
+  "cliente",
+  "cliente_nombre",
+  "telefono",
+  "col_cliente",
+  "email",
+  "sec_vehiculo",
+  "vehiculo",
+  "marca",
+  "modelo",
+  "anio",
+  "col_vehiculo",
+  "color",
+  "placas",
+  "vin",
+  "descripcion_danos",
+  "sec_conceptos",
+  "conceptos",
+  "subtotal",
+  "sec_agencia",
+  "agencia",
+  "orden_agencia",
+  "col_agencia",
+  "asesor_agencia",
+  "sec_aseguradora",
+  "aseguradora",
+  "numero_siniestro",
+  "numero_poliza",
+  "ajustador",
+  "col_aseguradora",
+  "autorizacion_aseguradora",
+  "monto_autorizado",
+  "deducible",
+  "sec_cobro",
+  "presupuesto_aprobado",
+  "monto_total",
+  "forma_pago",
+  "col_cobro",
+  "anticipo",
+  "monto_pagado",
+  "saldo_pendiente",
+  "sec_costeo",
+  "ingresos",
+  "costo_materiales",
+  "costo_mano_obra",
+  "col_costeo",
+  "costo_total",
+  "margen",
+  "margen_porcentaje",
+  "sec_calidad",
+  "checklist_calidad_ok",
+  "observaciones_calidad",
+  "col_calidad",
+  "fecha_entrega",
+  "recibido_por",
+  "sec_factura",
+  "folio_factura",
+  "col_factura",
+  "fecha_factura",
+  "sec_documentos",
+  "proyecto",
+  "cotizacion",
+  "orden_venta",
+  "orden_venta_deducible",
+  "col_documentos",
+  "factura_venta",
+  "factura_deducible",
+  "facturado",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_general",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "tipo_flujo",
+   "fieldtype": "Select",
+   "label": "Tipo de flujo",
+   "options": "\nAgencia\nParticular\nAseguradora",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "paso_actual",
+   "fieldtype": "Data",
+   "label": "Paso actual",
+   "read_only": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "label": "Estado",
+   "options": "Workflow State",
+   "hidden": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "col_general",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fecha_ingreso",
+   "fieldtype": "Datetime",
+   "label": "Fecha de ingreso",
+   "default": "now"
+  },
+  {
+   "fieldname": "company",
+   "label": "Compañía",
+   "fieldtype": "Link",
+   "options": "Company",
+   "remember_last_selected_value": 1
+  },
+  {
+   "fieldname": "requiere_recoleccion",
+   "fieldtype": "Check",
+   "label": "Requiere recolección"
+  },
+  {
+   "fieldname": "direccion_recoleccion",
+   "fieldtype": "Small Text",
+   "label": "Dirección de recolección",
+   "depends_on": "eval:doc.requiere_recoleccion",
+   "mandatory_depends_on": "eval:doc.requiere_recoleccion"
+  },
+  {
+   "fieldname": "sec_flujo",
+   "label": "Flujo de la orden",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "flujo_html",
+   "label": "Flujo",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "pasos",
+   "label": "Pasos",
+   "fieldtype": "Table",
+   "options": "Paso Orden Taller",
+   "read_only": 0,
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "sec_cliente",
+   "fieldtype": "Section Break",
+   "label": "Cliente"
+  },
+  {
+   "fieldname": "cliente",
+   "label": "Cliente",
+   "fieldtype": "Link",
+   "options": "Customer",
+   "reqd": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cliente_nombre",
+   "fieldtype": "Data",
+   "label": "Cliente",
+   "reqd": 0,
+   "in_list_view": 1,
+   "fetch_from": "cliente.customer_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "telefono",
+   "fieldtype": "Data",
+   "label": "Teléfono",
+   "options": "Phone",
+   "fetch_from": "cliente.mobile_no",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "col_cliente",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Correo",
+   "options": "Email",
+   "fetch_from": "cliente.email_id",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "sec_vehiculo",
+   "fieldtype": "Section Break",
+   "label": "Vehículo"
+  },
+  {
+   "fieldname": "vehiculo",
+   "label": "Vehículo",
+   "fieldtype": "Link",
+   "options": "Vehiculo Taller",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "marca",
+   "fieldtype": "Data",
+   "label": "Marca",
+   "fetch_from": "vehiculo.marca",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "modelo",
+   "fieldtype": "Data",
+   "label": "Modelo",
+   "fetch_from": "vehiculo.modelo",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "anio",
+   "fieldtype": "Int",
+   "label": "Año",
+   "fetch_from": "vehiculo.anio",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "col_vehiculo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Data",
+   "label": "Color",
+   "fetch_from": "vehiculo.color",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "placas",
+   "fieldtype": "Data",
+   "label": "Placas",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "fetch_from": "vehiculo.placas",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "vin",
+   "fieldtype": "Data",
+   "label": "VIN / Número de serie",
+   "fetch_from": "vehiculo.vin",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "descripcion_danos",
+   "fieldtype": "Text",
+   "label": "Descripción de daños"
+  },
+  {
+   "fieldname": "sec_conceptos",
+   "label": "Conceptos",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "conceptos",
+   "label": "Conceptos",
+   "fieldtype": "Table",
+   "options": "Concepto Orden Taller"
+  },
+  {
+   "fieldname": "subtotal",
+   "label": "Subtotal (sin IVA)",
+   "fieldtype": "Currency",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_agencia",
+   "fieldtype": "Section Break",
+   "label": "Agencia",
+   "depends_on": "eval:doc.tipo_flujo=='Agencia'"
+  },
+  {
+   "fieldname": "agencia",
+   "fieldtype": "Link",
+   "label": "Agencia",
+   "mandatory_depends_on": "eval:doc.tipo_flujo=='Agencia'",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "orden_agencia",
+   "fieldtype": "Data",
+   "label": "Orden de la agencia"
+  },
+  {
+   "fieldname": "col_agencia",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "asesor_agencia",
+   "fieldtype": "Data",
+   "label": "Asesor de la agencia"
+  },
+  {
+   "fieldname": "sec_aseguradora",
+   "fieldtype": "Section Break",
+   "label": "Aseguradora",
+   "depends_on": "eval:doc.tipo_flujo=='Aseguradora'"
+  },
+  {
+   "fieldname": "aseguradora",
+   "fieldtype": "Link",
+   "label": "Aseguradora",
+   "mandatory_depends_on": "eval:doc.tipo_flujo=='Aseguradora'",
+   "options": "Customer"
+  },
+  {
+   "fieldname": "numero_siniestro",
+   "fieldtype": "Data",
+   "label": "Número de siniestro"
+  },
+  {
+   "fieldname": "numero_poliza",
+   "fieldtype": "Data",
+   "label": "Número de póliza"
+  },
+  {
+   "fieldname": "ajustador",
+   "fieldtype": "Data",
+   "label": "Ajustador"
+  },
+  {
+   "fieldname": "col_aseguradora",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "autorizacion_aseguradora",
+   "fieldtype": "Check",
+   "label": "Autorizado por la aseguradora"
+  },
+  {
+   "fieldname": "monto_autorizado",
+   "fieldtype": "Currency",
+   "label": "Monto autorizado"
+  },
+  {
+   "fieldname": "deducible",
+   "fieldtype": "Currency",
+   "label": "Deducible",
+   "description": "Importe con IVA que paga el asegurado."
+  },
+  {
+   "fieldname": "sec_cobro",
+   "fieldtype": "Section Break",
+   "label": "Presupuesto y cobro"
+  },
+  {
+   "fieldname": "presupuesto_aprobado",
+   "fieldtype": "Check",
+   "label": "Presupuesto aprobado por el cliente",
+   "allow_on_submit": 1,
+   "description": "Se marca solo al enviar la orden de venta."
+  },
+  {
+   "fieldname": "monto_total",
+   "fieldtype": "Currency",
+   "label": "Total facturable (con IVA)",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "forma_pago",
+   "fieldtype": "Select",
+   "label": "Forma de pago",
+   "options": "\nEfectivo\nTarjeta\nTransferencia\nCrédito"
+  },
+  {
+   "fieldname": "col_cobro",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "anticipo",
+   "fieldtype": "Currency",
+   "label": "Anticipo",
+   "hidden": 1
+  },
+  {
+   "fieldname": "monto_pagado",
+   "fieldtype": "Currency",
+   "label": "Cobrado",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "saldo_pendiente",
+   "fieldtype": "Currency",
+   "label": "Saldo a cargo del cliente",
+   "read_only": 1,
+   "description": "Lo que falta cobrar en el paso Cobro (en Aseguradora, el deducible).",
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "sec_costeo",
+   "fieldtype": "Section Break",
+   "label": "Costeo"
+  },
+  {
+   "fieldname": "ingresos",
+   "fieldtype": "Currency",
+   "label": "Ingresos (sin IVA)",
+   "description": "Facturas enviadas de la orden.",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "costo_materiales",
+   "fieldtype": "Currency",
+   "label": "Costo de materiales",
+   "description": "Materiales facturados y consumibles con el proyecto de la orden.",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "costo_mano_obra",
+   "fieldtype": "Currency",
+   "label": "Costo de mano de obra",
+   "description": "Timesheets del proyecto (horas reales × costo por hora del paso).",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "col_costeo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "costo_total",
+   "fieldtype": "Currency",
+   "label": "Costo total",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "margen",
+   "fieldtype": "Currency",
+   "label": "Margen",
+   "bold": 1,
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "margen_porcentaje",
+   "fieldtype": "Percent",
+   "label": "Margen %",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "sec_calidad",
+   "fieldtype": "Section Break",
+   "label": "Calidad y entrega"
+  },
+  {
+   "fieldname": "checklist_calidad_ok",
+   "fieldtype": "Check",
+   "label": "Checklist de calidad aprobado"
+  },
+  {
+   "fieldname": "observaciones_calidad",
+   "fieldtype": "Small Text",
+   "label": "Observaciones de calidad"
+  },
+  {
+   "fieldname": "col_calidad",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fecha_entrega",
+   "fieldtype": "Datetime",
+   "label": "Fecha de entrega"
+  },
+  {
+   "fieldname": "recibido_por",
+   "fieldtype": "Data",
+   "label": "Recibido por"
+  },
+  {
+   "fieldname": "sec_factura",
+   "fieldtype": "Section Break",
+   "label": "Facturación"
+  },
+  {
+   "fieldname": "folio_factura",
+   "fieldtype": "Data",
+   "label": "Facturas",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "col_factura",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "fecha_factura",
+   "fieldtype": "Date",
+   "label": "Fecha de factura",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "sec_documentos",
+   "label": "Documentos ERPNext",
+   "fieldtype": "Section Break",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "proyecto",
+   "fieldtype": "Link",
+   "label": "Proyecto",
+   "options": "Project",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "cotizacion",
+   "label": "Cotización",
+   "fieldtype": "Link",
+   "options": "Quotation",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "orden_venta",
+   "label": "Orden de venta",
+   "fieldtype": "Link",
+   "options": "Sales Order",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "orden_venta_deducible",
+   "label": "Orden de venta (deducible)",
+   "fieldtype": "Link",
+   "options": "Sales Order",
+   "depends_on": "eval:doc.tipo_flujo==\"Aseguradora\"",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "col_documentos",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "factura_venta",
+   "label": "Factura",
+   "fieldtype": "Link",
+   "options": "Sales Invoice",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "factura_deducible",
+   "label": "Factura (deducible)",
+   "fieldtype": "Link",
+   "options": "Sales Invoice",
+   "depends_on": "eval:doc.tipo_flujo==\"Aseguradora\"",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "facturado",
+   "label": "Facturado",
+   "fieldtype": "Check",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Orden Taller",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-04 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Orden Taller",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "autoname": "format:OT-{YYYY}-{#####}",
+ "naming_rule": "Expression",
+ "is_submittable": 1,
+ "title_field": "cliente_nombre",
+ "show_title_field_in_link": 1,
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "print": 1,
+   "email": 1,
+   "report": 1,
+   "export": 1,
+   "share": 1
+  }
+ ],
+ "search_fields": "cliente_nombre,placas,tipo_flujo"
+}
