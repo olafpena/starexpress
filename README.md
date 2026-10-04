@@ -102,6 +102,23 @@ siniestro, la póliza, la autorización y el monto autorizado, y las partidas pa
 no hay orden de venta. Solo puede haber una valuación vigente por orden; para cambiarla se
 cancela y se modifica (*amend*).
 
+## VIN: dígito verificador y prellenado
+
+En **Vehiculo Taller**, **Orden Taller** y **Valuacion Taller** el VIN se normaliza
+(mayúsculas, sin espacios ni guiones) y se revisa al capturarlo
+(`taller/vehiculo/vin.py` y `taller/public/js/vin.js`):
+
+- **Formato**: 17 caracteres sin I, O ni Q; si no se cumple, se bloquea.
+- **Dígito verificador** (posición 9): se bloquea en VINs de Norteamérica (empiezan con
+  1-5; México es 3), donde es obligatorio. En otros orígenes solo se advierte, porque muchos
+  fabricantes no lo usan. El VIN que viene de Audatex nunca bloquea, solo advierte.
+- **Prellenado** con [ultravin](https://github.com/blackthorn-interstellar/ultravin) (base
+  vPIC de la NHTSA embebida, sin red): marca, modelo y año, y en el Vehículo versión,
+  carrocería y país de fabricación. Solo llena campos vacíos. La marca queda en mayúsculas.
+- **Marca distinta al VIN**: si la marca capturada no coincide con la del VIN se advierte.
+
+Solo se valida cuando el VIN es nuevo o cambia, así que los registros existentes no se bloquean.
+
 ## Contabilidad: clientes, facturas y cobros (ERPNext)
 
 La orden no lleva contabilidad propia: genera y sigue los documentos estándar de ERPNext,
@@ -194,6 +211,8 @@ taller/
 │   ├── configuracion_empresa.py  # fase 0: compañía, cuentas, catálogo, costos por hora
 │   ├── costeo.py                 # fase 2: proyecto, timesheets, consumos, margen
 │   └── documentos.py             # cotización, orden de venta, factura, cobro
+├── vehiculo/
+│   └── vin.py                    # dígito verificador y prellenado con ultravin
 ├── valuacion/
 │   └── audatex.py                # lector del PDF de Audatex
 ├── flujo/

@@ -20,6 +20,13 @@ after_install = "taller.flujo.configuracion.instalar"
 #     {"dt": "Regla Transicion Taller"},
 # ]
 
+# Validación del VIN y prellenado (taller/vehiculo/vin.py) en los formularios con VIN
+doctype_js = {
+    "Vehiculo Taller": "public/js/vin.js",
+    "Orden Taller": "public/js/vin.js",
+    "Valuacion Taller": "public/js/vin.js",
+}
+
 # Montos y documentos de ERPNext ligados a la Orden Taller (taller/erp/documentos.py)
 _eventos_documento = {
     evento: "taller.erp.documentos.al_cambiar_documento"

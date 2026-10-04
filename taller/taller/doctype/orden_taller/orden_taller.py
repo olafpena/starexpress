@@ -11,11 +11,13 @@ from taller.erp.costeo import (
 from taller.erp.documentos import calcular_conceptos, calcular_montos
 from taller.flujo.pasos import sincronizar_pasos
 from taller.flujo.reglas import validar_reglas_transicion
+from taller.vehiculo.vin import revisar_vin
 
 
 class OrdenTaller(Document):
     def validate(self):
         self.company = self.company or frappe.defaults.get_user_default("Company")
+        revisar_vin(self)
         calcular_conceptos(self)
         calcular_montos(self)
         calcular_costeo(self)

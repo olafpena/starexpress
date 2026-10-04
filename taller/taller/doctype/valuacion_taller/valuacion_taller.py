@@ -23,6 +23,7 @@ from frappe.utils import flt
 from taller.erp.configuracion_empresa import ARTICULO_POR_TIPO
 from taller.erp.documentos import tasa_impuestos
 from taller.valuacion import audatex
+from taller.vehiculo.vin import revisar_vin
 
 DOCTYPE_ORDEN = "Orden Taller"
 TOLERANCIA = 1.0  # pesos de diferencia aceptados contra el PDF (redondeos)
@@ -40,6 +41,8 @@ CAMPOS_VEHICULO = ["marca", "modelo", "anio", "color", "placas", "vin"]
 
 class ValuacionTaller(Document):
     def validate(self):
+        # El VIN de Audatex lo captura la aseguradora o agencia: solo se advierte
+        revisar_vin(self, estricto=self.origen != "Audatex")
         self.validar_unica()
         self.calcular_totales()
 
@@ -155,6 +158,7 @@ def aplicar_a_orden(val):
 
     orden.valuacion = val.name
     orden.valuacion_aprobada = 1
+    orden.flags.vin_externo = val.origen == "Audatex"
     for campo in CAMPOS_VEHICULO:
         if not orden.get(campo) and val.get(campo):
             orden.set(campo, val.get(campo))
@@ -193,8 +197,10 @@ def vehiculo_de(val, orden):
             existente = frappe.db.get_value("Vehiculo Taller", {campo: val.get(campo)})
             if existente:
                 return existente
-    return frappe.get_doc({
+    vehiculo = frappe.get_doc({
         "doctype": "Vehiculo Taller",
         "cliente": orden.cliente if orden.tipo_flujo == "Particular" else None,
         **{c: val.get(c) for c in CAMPOS_VEHICULO},
-    }).insert(ignore_permissions=True).name
+    })
+    vehiculo.flags.vin_externo = val.origen == "Audatex"
+    return vehiculo.insert(ignore_permissions=True).name
