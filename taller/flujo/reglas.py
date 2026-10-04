@@ -5,6 +5,7 @@ Cada vez que una Orden Taller cambia de `workflow_state` (por botón del
 workflow o por guardado directo) se evalúan las "Regla Transicion Taller"
 activas que apliquen:
 
+  * tipo_orden  : "Todos" o el tipo de orden (Hojalatería y Pintura, Mecánica)
   * tipo_flujo  : "Todos" o el tipo de la orden
   * estado_origen (opcional): solo si la orden viene de ese estado
   * estado_destino (opcional): solo si la orden va a ese estado
@@ -27,7 +28,7 @@ import frappe
 from frappe import _
 from frappe.utils.safe_exec import safe_eval
 
-from taller.flujo.configuracion import CAMPO_ESTADO, DOCTYPE_REGLAS, paso_de_estado
+from taller.flujo.configuracion import CAMPO_ESTADO, DOCTYPE_REGLAS, paso_de_estado, tipo_orden_de
 
 
 def validar_reglas_transicion(doc):
@@ -38,7 +39,7 @@ def validar_reglas_transicion(doc):
         return
 
     bloqueos, advertencias = [], []
-    for regla in obtener_reglas(doc.get("tipo_flujo")):
+    for regla in obtener_reglas(doc.get("tipo_flujo"), tipo_orden_de(doc)):
         if not aplica(regla, origen, destino):
             continue
         if evaluar(regla, doc, anterior, origen, destino):
@@ -53,10 +54,11 @@ def validar_reglas_transicion(doc):
                      title=_("No se puede pasar de {0} a {1}").format(origen or "-", destino))
 
 
-def obtener_reglas(tipo_flujo):
+def obtener_reglas(tipo_flujo, tipo_orden):
     return frappe.get_all(
         DOCTYPE_REGLAS,
-        filters={"activo": 1, "tipo_flujo": ["in", ["Todos", tipo_flujo or ""]]},
+        filters={"activo": 1, "tipo_flujo": ["in", ["Todos", tipo_flujo or ""]],
+                 "tipo_orden": ["in", ["Todos", tipo_orden or ""]]},
         fields=["name", "paso", "estado_origen", "estado_destino",
                 "tipo_regla", "condicion", "mensaje"],
         order_by="prioridad asc, creation asc",

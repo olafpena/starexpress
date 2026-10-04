@@ -21,7 +21,10 @@ frappe.ui.form.on("Orden Taller", {
 		frm.set_df_property("conceptos", "read_only", frm.doc.orden_venta ? 1 : 0);
 		frm.set_df_property("cliente", "label", frm.doc.tipo_flujo === "Agencia" ? __("Agencia (cliente)") : __("Cliente"));
 		if (frm.doc.tipo_orden === "Mecánica") {
-			frm.page.set_indicator(`${__("Mecánica")} · ${frm.doc.workflow_state || __("Nueva")}`, "orange");
+			frm.page.set_indicator(
+				`${__("Mecánica")} · ${frm.doc.tipo_flujo || ""} · ${frm.doc.paso_actual || __("Nueva")}`,
+				"orange"
+			);
 		} else if (frm.doc.tipo_flujo) {
 			frm.page.set_indicator(
 				`${frm.doc.tipo_flujo} · ${frm.doc.paso_actual || "Nueva"}`,
@@ -39,12 +42,6 @@ frappe.ui.form.on("Orden Taller", {
 	dibujar_flujo(frm) {
 		const $wrapper = frm.get_field("flujo_html").$wrapper;
 		const pasos = frm.doc.pasos || [];
-		if (frm.doc.tipo_orden && frm.doc.tipo_orden !== "Hojalatería y Pintura") {
-			$wrapper.html(
-				`<div class="text-muted small">${__("El flujo de pasos es de Hojalatería y Pintura; las órdenes de {0} no lo usan.", [frappe.utils.escape_html(frm.doc.tipo_orden)])}</div>`
-			);
-			return;
-		}
 		if (!pasos.length) {
 			$wrapper.html(
 				`<div class="text-muted small">${__("Elige el tipo de flujo y guarda la orden para ver sus pasos.")}</div>`

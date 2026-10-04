@@ -16,13 +16,35 @@ bench --site <sitio> install-app taller
 
 ## Tipo de orden
 
-Cada orden es de **Hojalatería y Pintura** (predeterminado) o **Mecánica**. Todo el flujo
-de este README (workflow de 12 pasos, tabla de pasos, valuación y sus reglas) es de
-Hojalatería y Pintura: sus transiciones llevan la condición
-`doc.tipo_orden == "Hojalatería y Pintura"`. Las órdenes de Mecánica quedan en *Nueva*
-sin esos pasos (aún no tienen flujo propio), pero sí se cotizan, facturan, cobran y costean, y
-se pueden Cancelar y Reactivar. El tipo de orden solo se cambia mientras la orden está en
-*Nueva*.
+Cada orden es de **Hojalatería y Pintura** (predeterminado) o **Mecánica**, y cada tipo tiene
+su secuencia de pasos (`FLUJOS_POR_ORDEN` en `taller/flujo/configuracion.py`):
+
+| Hojalatería y Pintura | Mecánica |
+|---|---|
+| Recolección (opcional) | — |
+| **Recepción** | **Recepción** |
+| Carrocería, Preparación, Pintura, Armado, Pulido | Diagnóstico, Cotización, Autorización del cliente, Refacciones, Reparación, Hallazgo adicional |
+| Control de calidad (retrabajo a Carrocería…Pulido) | Control de calidad y ruta (retrabajo a Reparación) |
+| **Lavado, Entrega, Cobro, Facturación** | **Lavado, Entrega, Cobro, Facturación** |
+
+Los pasos con el mismo nombre (en negritas) son el mismo paso: comparten estados del
+workflow y reglas (vehículo en Recepción, entrega, cobro y facturación). Frappe permite un solo
+workflow por DocType, así que las transiciones llevan la condición del tipo de orden que las usa
+(`doc.tipo_orden == ...`, o `in (...)` en los pasos compartidos); Cancelar y Reactivar aplican a
+cualquier tipo. El tipo de orden solo se cambia mientras la orden está en *Nueva*.
+
+La valuación (Audatex o captura manual) es de Hojalatería y Pintura. En Mecánica:
+
+| Paso | Para completarlo |
+|---|---|
+| Diagnóstico | Capturar el diagnóstico |
+| Cotización | Crear la cotización (Crear → Cotización) |
+| Autorización del cliente | Presupuesto aprobado (se marca al enviar la orden de venta) |
+| Hallazgo adicional | Describirlo y agregar el trabajo a la orden de venta con *Actualizar artículos*; si no hubo, se anula |
+| Control de calidad y ruta | Checklist de calidad aprobado |
+
+Cotización, orden de venta, factura, cobro, consumo de materiales, timesheets y costeo funcionan
+igual en los dos tipos. Las reglas tienen un campo *Tipo de orden* para limitar su alcance.
 
 ## Pasos y estados
 

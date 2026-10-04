@@ -30,7 +30,7 @@ doctype_js = {
 # Montos y documentos de ERPNext ligados a la Orden Taller (taller/erp/documentos.py)
 _eventos_documento = {
     evento: "taller.erp.documentos.al_cambiar_documento"
-    for evento in ("on_submit", "on_cancel", "on_trash")
+    for evento in ("on_submit", "on_cancel", "on_trash", "on_update_after_submit")
 }
 doc_events = {
     "Quotation": _eventos_documento,

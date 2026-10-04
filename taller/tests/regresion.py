@@ -148,37 +148,139 @@ def configuracion_del_workflow():
     verifica(wf.is_active and wf.document_type == conf.DOCTYPE, "el workflow no está activo en Orden Taller")
     for t in wf.transitions:
         if t.action in conf.ACCIONES_GENERALES:
-            verifica(conf.CONDICION_TIPO_ORDEN not in (t.condition or ""), f"{t.action} no debe depender del tipo de orden")
+            verifica("tipo_orden" not in (t.condition or ""), f"{t.action} no debe depender del tipo de orden")
         else:
-            verifica(conf.CONDICION_TIPO_ORDEN in (t.condition or ""), f"falta la condición de tipo de orden en {t.state} → {t.action}")
+            verifica("doc.tipo_orden" in (t.condition or ""), f"falta la condición de tipo de orden en {t.state} → {t.action}")
+    generadas = {(t["state"], t["action"], t["next_state"], t["allowed"]): t["condition"] for t in conf.construir_transiciones()}
+    distintas = [(t.state, t.action) for t in wf.transitions
+                 if generadas.get((t.state, t.action, t.next_state, t.allowed), "falta") != t.condition]
+    verifica(not distintas, f"el workflow del sitio no coincide con el generador: {distintas[:3]}")
     recoleccion = [t.condition for t in wf.transitions if t.state == conf.ESTADO_INICIAL and "recoleccion" in (t.condition or "")]
     verifica(len(recoleccion) == 4, f"se perdieron las condiciones de recolección ({len(recoleccion)} de 4)")
     sin_tipo = frappe.get_all("Orden Taller", filters={"tipo_orden": ["in", ["", None]]}, pluck="name")
     verifica(not sin_tipo, f"órdenes sin tipo de orden: {sin_tipo}")
 
 
+def estado_paso(o):
+    return {p.paso: p.estado for p in o.pasos}
+
+
+def acciones(o):
+    return {t.action for t in get_transitions(o)}
+
+
 @caso
-def mecanica_no_usa_el_flujo():
-    o = orden(tipo_orden=MECANICA, conceptos=[{"item_code": "MO-HOJ", "qty": 1}])
-    verifica(o.workflow_state == conf.ESTADO_INICIAL, f"estado inicial {o.workflow_state}")
-    verifica(not o.pasos, "una orden de Mecánica no debe tener tabla de pasos")
-    acciones = {t.action for t in get_transitions(o)}
-    verifica(acciones == {"Cancelar"}, f"acciones disponibles en Mecánica: {acciones}")
-    bloquea(lambda: apply_workflow(o, "Enviar a Recepción"))
-    bloquea(lambda: frappe.get_doc({"doctype": "Valuacion Taller", "orden_taller": o.name, "origen": "Captura manual",
+def pasos_compartidos_entre_tipos_de_orden():
+    hyp = avanza(orden(placas="REG10"), "Enviar a Recepción")
+    mec = avanza(orden(tipo_orden=MECANICA, placas="REG11"), "Enviar a Recepción")
+    verifica(hyp.workflow_state == mec.workflow_state == "Recepción - En Proceso", "Recepción debe ser el mismo estado")
+    verifica([p.paso for p in mec.pasos] == conf.SECUENCIA_MECANICA, f"pasos de Mecánica {[p.paso for p in mec.pasos]}")
+    verifica(estado_paso(mec)["Recepción"] == "En Proceso", "la tabla de pasos de Mecánica no avanzó")
+    valuacion_manual(hyp)
+    hyp = avanza(hyp, "Completar")
+    mec = avanza(mec, "Completar")  # Mecánica no requiere valuación
+    verifica(acciones(hyp) >= {"Enviar a Carrocería"} and "Enviar a Diagnóstico" not in acciones(hyp), f"HyP: {acciones(hyp)}")
+    verifica("Enviar a Diagnóstico" in acciones(mec) and "Enviar a Carrocería" not in acciones(mec), f"Mecánica: {acciones(mec)}")
+    bloquea(lambda: apply_workflow(mec, "Enviar a Carrocería"))
+    bloquea(lambda: frappe.get_doc({"doctype": "Valuacion Taller", "orden_taller": mec.name, "origen": "Captura manual",
                                     "partidas": [{"tipo": "Otro", "descripcion": "x", "cantidad": 1,
                                                   "precio_unitario": 1}]}).insert(),
             "flujo de Hojalatería y Pintura")
-    so = documentos.crear_ordenes_venta(o.name)[0]
-    enviar("Sales Order", so)
-    si = documentos.crear_facturas(o.name)[0]
-    enviar("Sales Invoice", si)
+
+
+@caso
+def mecanica_flujo_completo_con_contabilidad():
+    recibir_inventario("MAT-PRIMER", 5, 200)
+    o = orden(tipo_orden=MECANICA, vin=VIN_TOYOTA, conceptos=[{"item_code": "MO-HOJ", "qty": 2},
+                                                              {"item_code": "MAT-PRIMER", "qty": 1}])
+    verifica(o.marca == "TOYOTA", "el VIN no prellenó la marca en Mecánica")
+    o = avanza(o, "Enviar a Recepción", "Completar", "Enviar a Diagnóstico")
+    retrocede_inicio(o, "Diagnóstico", 1)
+    bloquea(lambda: apply_workflow(o, "Completar"), "diagnóstico")
     o.reload()
-    verifica(o.facturado and flt(o.ingresos) == 450, f"Mecánica facturada: facturado={o.facturado} ingresos={o.ingresos}")
-    o = avanza(o, "Cancelar")
-    verifica(o.workflow_state == conf.ESTADO_CANCELADA, "Mecánica no se pudo cancelar")
+    o.diagnostico = "Falla en balatas delanteras"
+    o.save()
+    o = avanza(o, "Completar", "Enviar a Cotización")
+    bloquea(lambda: apply_workflow(o, "Completar"), "cotización")
+    o.reload()
+    enviar("Quotation", documentos.crear_cotizacion(o.name)[0])
+    o = avanza(o, "Completar", "Enviar a Autorización del cliente")
+    bloquea(lambda: apply_workflow(o, "Completar"), "autorizar")
+    o.reload()
+    so = enviar("Sales Order", documentos.crear_ordenes_venta(o.name)[0])
+    o.reload()
+    verifica(o.presupuesto_aprobado, "la orden de venta enviada debe marcar Presupuesto aprobado")
+    pagar(o, 500)
+    o = avanza(o, "Completar", "Enviar a Refacciones", "Completar", "Enviar a Reparación")
+    retrocede_inicio(o, "Reparación", 2)
+    o = avanza(o, "Completar", "Enviar a Hallazgo adicional")
+
+    # Hallazgo: se agrega trabajo a la orden de venta enviada con "Actualizar artículos"
+    bloquea(lambda: apply_workflow(o, "Completar"), "hallazgo")
+    o.reload()
+    o.hallazgo_adicional = "Disco delantero rayado"
+    o.save()
+    from erpnext.controllers.accounts_controller import update_child_qty_rate
+    so.reload()
+    filas = [{"docname": i.name, "item_code": i.item_code, "qty": i.qty, "rate": i.rate} for i in so.items]
+    filas.append({"item_code": "SRV-PUL", "qty": 1, "rate": 800, "delivery_date": nowdate()})
+    update_child_qty_rate("Sales Order", frappe.as_json(filas), so.name)
+    o.reload()
+    esperado = flt((900 + 380 + 800) * 1.16, 2)
+    verifica(flt(o.monto_total) == esperado, f"total tras el hallazgo {o.monto_total}, esperado {esperado}")
+    o = avanza(o, "Completar", "Enviar a Control de calidad y ruta")
+    bloquea(lambda: apply_workflow(o, "Completar"), "prueba de ruta")
+    o.reload()
+    o = avanza(o, "Retrabajo a Reparación")
+    verifica(estado_paso(o)["Hallazgo adicional"] is None and estado_paso(o)["Reparación"] == "En Proceso",
+             f"retrabajo: {estado_paso(o)}")
+    o = avanza(o, "Completar", "Enviar a Hallazgo adicional", "Anular", "Enviar a Control de calidad y ruta")
+    o.reload()
+    o.update({"checklist_calidad_ok": 1, "recibido_por": "Cliente", "fecha_entrega": now_datetime()})
+    o.save()
+    o = avanza(o, "Completar", "Enviar a Lavado", "Completar", "Enviar a Entrega", "Completar", "Enviar a Cobro")
+    bloquea(lambda: apply_workflow(o, "Completar"), "saldo pendiente")
+    o.reload()
+    si = enviar("Sales Invoice", documentos.crear_facturas(o.name)[0])
+    verifica(flt(si.grand_total) == esperado and si.update_stock, f"factura {si.grand_total} update_stock={si.update_stock}")
+    asiento = gl(si.name)
+    verifica(asiento.get("CUENTAS POR COBRAR CLIENTES") == esperado and asiento.get("COSTO DE VENTAS") == 200,
+             f"asiento {asiento}")
+    pagar(o)
+    o.reload()
+    o = avanza(o, "Completar", "Enviar a Facturación", "Completar")
+    verifica(o.workflow_state == "Facturación - Completado" and o.docstatus == 1, f"final {o.workflow_state}")
+    verifica(frappe.db.get_value("Project", o.proyecto, "status") == "Completed", "proyecto sin cerrar")
+    verifica(flt(o.costo_mano_obra) >= 450 and flt(o.costo_materiales) == 200,
+             f"costeo: mano de obra {o.costo_mano_obra}, materiales {o.costo_materiales}")
+    verifica(flt(o.ingresos) == flt(esperado / 1.16, 2) and flt(o.margen) == flt(o.ingresos - o.costo_total, 2),
+             f"margen {o.ingresos} - {o.costo_total} = {o.margen}")
+    actividades = set(frappe.get_all("Timesheet Detail", filters={"project": o.proyecto}, pluck="activity_type"))
+    verifica({"Taller - Diagnóstico", "Taller - Reparación"} <= actividades, f"timesheets {actividades}")
+
+
+@caso
+def mecanica_aseguradora_y_agencia():
+    o = orden(tipo_orden=MECANICA, tipo_flujo="Aseguradora", aseguradora=cliente("Aseg Mec", "Aseguradora"),
+              deducible=1160, conceptos=[{"item_code": "MO-HOJ", "qty": 4}])
+    sos = documentos.crear_ordenes_venta(o.name)
+    verifica(len(sos) == 2, f"Aseguradora de Mecánica debe generar 2 órdenes de venta ({sos})")
+    for so in sos:
+        enviar("Sales Order", so)
+    total = sum(flt(enviar("Sales Invoice", si).grand_total) for si in documentos.crear_facturas(o.name))
+    verifica(flt(total, 2) == flt(1800 * 1.16, 2), f"facturas {total}")
+    agencia = cliente("Agencia Mec", "Agencia")
+    a = orden(tipo_orden=MECANICA, tipo_flujo="Agencia", cliente=agencia, conceptos=[{"item_code": "SRV-LAV", "qty": 1}])
+    verifica(frappe.get_doc("Sales Order", documentos.crear_ordenes_venta(a.name)[0]).customer == agencia,
+             "la orden de venta de Agencia debe ir a la agencia")
+
+
+@caso
+def mecanica_cancelar_y_reactivar():
+    o = avanza(orden(tipo_orden=MECANICA), "Enviar a Recepción", "Cancelar")
+    verifica(o.workflow_state == conf.ESTADO_CANCELADA and estado_paso(o)["Recepción"] == "Anulado", "cancelar")
     o = avanza(o, "Reactivar")
-    verifica(o.workflow_state == conf.ESTADO_INICIAL and not o.pasos, "Mecánica reactivada con pasos o en otro estado")
+    verifica(o.workflow_state == conf.ESTADO_INICIAL and len(o.pasos) == 12, "reactivar")
 
 
 @caso
@@ -187,7 +289,7 @@ def cambio_de_tipo_de_orden():
     verifica(len(o.pasos) == 12, f"Hojalatería y Pintura con {len(o.pasos)} pasos")
     o.tipo_orden = MECANICA
     o.save()
-    verifica(not o.pasos, "al pasar a Mecánica en Nueva deben quitarse los pasos")
+    verifica([p.paso for p in o.pasos] == conf.SECUENCIA_MECANICA, "al pasar a Mecánica deben generarse sus pasos")
     o.tipo_orden = HYP
     o.save()
     verifica(len(o.pasos) == 12, "al volver a Hojalatería y Pintura deben regenerarse los pasos")

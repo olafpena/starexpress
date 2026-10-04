@@ -5,7 +5,8 @@ La tabla `pasos` (DocType hijo "Paso Orden Taller") tiene una fila por cada paso
 del flujo de la orden y la mantiene el servidor a partir de `workflow_state`:
 
   * Al crear la orden (o cambiar el tipo mientras está en Nueva) se generan las
-    filas según FLUJOS[tipo_flujo] con las horas de HORAS_ESTIMADAS.
+    filas según la secuencia de su tipo de orden y tipo de flujo, con las horas
+    de HORAS_ESTIMADAS.
   * Al entrar a un paso, su fila queda En Proceso; los pasos anteriores que no
     se tocaron (p. ej. Recolección cuando no se requiere) quedan Anulados y los
     posteriores se limpian (retrabajo desde Control de calidad).
@@ -27,10 +28,11 @@ from taller.flujo.configuracion import (
     EN_PROCESO,
     ESTADO_CANCELADA,
     ESTADO_INICIAL,
-    FLUJOS,
     HORAS_ESTIMADAS,
     paso_de_estado,
+    secuencia,
     sufijo_de_estado,
+    tipo_orden_de,
     usa_flujo,
 )
 
@@ -39,7 +41,7 @@ def sincronizar_pasos(doc):
     anterior = doc.get_doc_before_save()
     destino = doc.get(CAMPO_ESTADO)
 
-    # Solo Hojalatería y Pintura tiene pasos; otros tipos de orden (Mecánica) no
+    # Un tipo de orden sin secuencia definida no tiene pasos
     if not usa_flujo(doc):
         doc.set(CAMPO_PASOS, [])
         return
@@ -57,7 +59,7 @@ def sincronizar_pasos(doc):
 
 def generar_pasos(doc):
     doc.set(CAMPO_PASOS, [])
-    for paso in FLUJOS.get(doc.tipo_flujo) or []:
+    for paso in secuencia(tipo_orden_de(doc), doc.tipo_flujo):
         doc.append(CAMPO_PASOS, {"paso": paso, "horas_estimadas": HORAS_ESTIMADAS.get(paso, 0)})
 
 

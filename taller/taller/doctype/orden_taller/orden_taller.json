@@ -34,6 +34,10 @@
   "placas",
   "vin",
   "descripcion_danos",
+  "sec_mecanica",
+  "diagnostico",
+  "col_mecanica",
+  "hallazgo_adicional",
   "sec_valuacion",
   "valuacion",
   "valuacion_aprobada",
@@ -108,7 +112,7 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "bold": 1,
-   "description": "El flujo de pasos aplica a Hojalatería y Pintura; solo se puede cambiar mientras la orden está en Nueva."
+   "description": "Define el flujo de pasos; solo se puede cambiar mientras la orden está en Nueva."
   },
   {
    "fieldname": "tipo_flujo",
@@ -186,8 +190,7 @@
    "read_only": 0,
    "cannot_add_rows": 1,
    "cannot_delete_rows": 1,
-   "allow_on_submit": 1,
-   "depends_on": "eval:doc.tipo_orden==\"Hojalatería y Pintura\""
+   "allow_on_submit": 1
   },
   {
    "fieldname": "sec_cliente",
@@ -296,6 +299,28 @@
    "fieldname": "descripcion_danos",
    "fieldtype": "Text",
    "label": "Descripción de daños"
+  },
+  {
+   "fieldname": "sec_mecanica",
+   "fieldtype": "Section Break",
+   "label": "Mecánica",
+   "depends_on": "eval:doc.tipo_orden==\"Mecánica\""
+  },
+  {
+   "fieldname": "diagnostico",
+   "fieldtype": "Text",
+   "label": "Diagnóstico",
+   "description": "Necesario para completar el paso Diagnóstico."
+  },
+  {
+   "fieldname": "col_mecanica",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "hallazgo_adicional",
+   "fieldtype": "Text",
+   "label": "Hallazgo adicional",
+   "description": "Si hay trabajo extra, agrégalo a la orden de venta con Actualizar artículos; si no hubo hallazgo, anula el paso."
   },
   {
    "fieldname": "sec_valuacion",
@@ -673,7 +698,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-05 10:00:00.000000",
+ "modified": "2026-10-05 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Orden Taller",

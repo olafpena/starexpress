@@ -11,6 +11,7 @@
   "tipo_regla",
   "prioridad",
   "sec_alcance",
+  "tipo_orden",
   "tipo_flujo",
   "paso",
   "col_2",
@@ -60,6 +61,15 @@
    "label": "¿Cuándo aplica?"
   },
   {
+   "fieldname": "tipo_orden",
+   "fieldtype": "Select",
+   "label": "Tipo de orden",
+   "options": "Todos\nHojalatería y Pintura\nMecánica",
+   "default": "Todos",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
    "fieldname": "tipo_flujo",
    "fieldtype": "Select",
    "label": "Tipo de flujo",
@@ -72,7 +82,7 @@
    "fieldname": "paso",
    "fieldtype": "Select",
    "label": "Paso",
-   "options": "Todos\nRecolección\nRecepción\nCarrocería\nPreparación\nPintura\nArmado\nPulido\nControl de calidad\nLavado\nEntrega\nCobro\nFacturación",
+   "options": "Todos\nRecolección\nRecepción\nCarrocería\nPreparación\nPintura\nArmado\nPulido\nControl de calidad\nDiagnóstico\nCotización\nAutorización del cliente\nRefacciones\nReparación\nHallazgo adicional\nControl de calidad y ruta\nLavado\nEntrega\nCobro\nFacturación",
    "default": "Todos",
    "in_list_view": 1,
    "in_standard_filter": 1,
@@ -117,7 +127,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-04 10:00:00.000000",
+ "modified": "2026-10-05 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Regla Transicion Taller",

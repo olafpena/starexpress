@@ -30,6 +30,7 @@ condiciones que hayas escrito a mano en las transiciones desde el Desk (se
 agregan con "and" a la condición generada).
 """
 
+import re
 from collections import OrderedDict
 
 SEPARADOR = " - "
@@ -67,13 +68,25 @@ PASOS = OrderedDict([
     ("Armado", "Armador"),
     ("Pulido", "Pulidor"),
     ("Control de calidad", "Inspector de Calidad"),
+    # Mecánica (Recepción, Lavado, Entrega, Cobro y Facturación se comparten)
+    ("Diagnóstico", "Mecánico"),
+    ("Cotización", "Asesor de Servicio"),
+    ("Autorización del cliente", "Asesor de Servicio"),
+    ("Refacciones", "Almacenista"),
+    ("Reparación", "Mecánico"),
+    ("Hallazgo adicional", "Mecánico"),
+    ("Control de calidad y ruta", "Inspector de Calidad"),
     ("Lavado", "Lavador"),
     ("Entrega", "Asesor de Servicio"),
     ("Cobro", "Cajero"),
     ("Facturación", "Facturista"),
 ])
 
-TODOS_LOS_PASOS = list(PASOS)
+SECUENCIA_HYP = ["Recolección", "Recepción", "Carrocería", "Preparación", "Pintura", "Armado",
+                 "Pulido", "Control de calidad", "Lavado", "Entrega", "Cobro", "Facturación"]
+SECUENCIA_MECANICA = ["Recepción", "Diagnóstico", "Cotización", "Autorización del cliente",
+                      "Refacciones", "Reparación", "Hallazgo adicional", "Control de calidad y ruta",
+                      "Lavado", "Entrega", "Cobro", "Facturación"]
 
 # --------------------------------------------------------------------------
 # Secuencia de pasos por tipo de flujo.
@@ -83,9 +96,17 @@ TODOS_LOS_PASOS = list(PASOS)
 # `requiere_recoleccion` de la orden.
 # --------------------------------------------------------------------------
 FLUJOS = OrderedDict([
-    ("Agencia", list(TODOS_LOS_PASOS)),
-    ("Particular", list(TODOS_LOS_PASOS)),
-    ("Aseguradora", list(TODOS_LOS_PASOS)),
+    ("Agencia", list(SECUENCIA_HYP)),
+    ("Particular", list(SECUENCIA_HYP)),
+    ("Aseguradora", list(SECUENCIA_HYP)),
+])
+
+# Secuencias por tipo de orden y tipo de flujo. FLUJOS es la de Hojalatería y
+# Pintura. Un paso con el mismo nombre en dos tipos de orden es el mismo paso:
+# comparte sus estados del workflow (y las reglas que los usan).
+FLUJOS_POR_ORDEN = OrderedDict([
+    (TIPO_ORDEN_FLUJO, FLUJOS),
+    (TIPO_ORDEN_MECANICA, OrderedDict((t, list(SECUENCIA_MECANICA)) for t in FLUJOS)),
 ])
 
 # Horas estimadas por paso; llenan la columna "Hrs est." de la tabla de pasos
@@ -98,6 +119,13 @@ HORAS_ESTIMADAS = {
     "Armado": 3,
     "Pulido": 2,
     "Control de calidad": 1,
+    "Diagnóstico": 1,
+    "Cotización": 0.5,
+    "Autorización del cliente": 0,
+    "Refacciones": 0.5,
+    "Reparación": 3,
+    "Hallazgo adicional": 0.5,
+    "Control de calidad y ruta": 0.5,
     "Lavado": 1,
     "Entrega": 0.5,
     "Cobro": 0.5,
@@ -131,6 +159,11 @@ PASO_RECOLECCION = "Recolección"
 PASO_CALIDAD = "Control de calidad"
 # Pasos a los que Control de calidad puede regresar la unidad (retrabajo)
 PASOS_RETRABAJO = ["Carrocería", "Preparación", "Pintura", "Armado", "Pulido"]
+# Por tipo de orden: (paso de calidad, pasos a los que puede regresar la unidad)
+RETRABAJO = {
+    TIPO_ORDEN_FLUJO: (PASO_CALIDAD, PASOS_RETRABAJO),
+    TIPO_ORDEN_MECANICA: ("Control de calidad y ruta", ["Reparación"]),
+}
 
 # Permisos sobre Orden Taller; los roles no listados reciben PERMISOS_BASE
 PERMISOS_BASE = ["read", "write", "print", "report"]
@@ -149,9 +182,25 @@ def estado(paso, sufijo):
     return f"{paso}{SEPARADOR}{sufijo}"
 
 
+def tipo_orden_de(doc):
+    return doc.get(CAMPO_TIPO_ORDEN) or TIPO_ORDEN_FLUJO
+
+
+def secuencia(tipo_orden, tipo_flujo):
+    """Pasos de la orden según su tipo de orden y tipo de flujo ([] si no hay)."""
+    return list(FLUJOS_POR_ORDEN.get(tipo_orden or TIPO_ORDEN_FLUJO, {}).get(tipo_flujo) or [])
+
+
 def usa_flujo(doc):
-    """True si la orden sigue el workflow de Hojalatería y Pintura (sin tipo = sí)."""
-    return (doc.get(CAMPO_TIPO_ORDEN) or TIPO_ORDEN_FLUJO) == TIPO_ORDEN_FLUJO
+    """True si el tipo de orden tiene flujo de pasos (sin tipo = Hojalatería y Pintura)."""
+    return tipo_orden_de(doc) in FLUJOS_POR_ORDEN
+
+
+def combinaciones():
+    """(tipo de orden, tipo de flujo, secuencia) de todos los flujos."""
+    for orden, flujos in FLUJOS_POR_ORDEN.items():
+        for flujo, seq in flujos.items():
+            yield orden, flujo, seq
 
 
 def paso_de_estado(nombre_estado):
@@ -164,11 +213,7 @@ def sufijo_de_estado(nombre_estado):
 
 
 def pasos_usados():
-    usados = OrderedDict()
-    for paso in PASOS:
-        if any(paso in seq for seq in FLUJOS.values()):
-            usados[paso] = True
-    return list(usados)
+    return [paso for paso in PASOS if any(paso in seq for _o, _f, seq in combinaciones())]
 
 
 def roles():
@@ -185,6 +230,27 @@ def condicion_tipos(tipos):
     return "doc.tipo_flujo in (" + ", ".join(f'"{t}"' for t in tipos) + ")"
 
 
+def condicion_orden(ordenes):
+    """Expresión sobre tipo_orden; siempre presente para que un tipo sin flujo no herede pasos."""
+    ordenes = [o for o in FLUJOS_POR_ORDEN if o in ordenes]
+    if len(ordenes) == 1:
+        return f'doc.{CAMPO_TIPO_ORDEN} == "{ordenes[0]}"'
+    return f"doc.{CAMPO_TIPO_ORDEN} in (" + ", ".join(f'"{o}"' for o in ordenes) + ")"
+
+
+def condicion_combos(combos):
+    """Condición de una transición que aplica a varias (tipo de orden, tipo de flujo, extra)."""
+    por_orden = OrderedDict()
+    for orden, flujo, extra in combos:
+        por_orden.setdefault((orden, extra), []).append(flujo)
+    grupos = OrderedDict()
+    for (orden, extra), flujos in por_orden.items():
+        grupos.setdefault((extra, tuple(flujos)), []).append(orden)
+    partes = [y(condicion_orden(ordenes), condicion_tipos(flujos), extra)
+              for (extra, flujos), ordenes in grupos.items()]
+    return partes[0] if len(partes) == 1 else " or ".join(f"({p})" for p in partes)
+
+
 def y(*condiciones):
     condiciones = [c for c in condiciones if c]
     if not condiciones:
@@ -194,9 +260,18 @@ def y(*condiciones):
     return " and ".join(f"({c})" for c in condiciones)
 
 
+# Lo que escribe el generador; una condición con algo más la escribió alguien en el Desk
+_VOCABULARIO_GENERADO = re.compile(
+    r'doc\.(?:tipo_orden|tipo_flujo|requiere_recoleccion)|"[^"]*"|\b(?:and|or|not|in)\b|==|[(),\s]')
+
+
+def es_condicion_generada(condicion):
+    return not _VOCABULARIO_GENERADO.sub("", condicion or "")
+
+
 def tipos_que_anulan(paso):
-    """Tipos de flujo en los que el paso se puede anular (nunca el último paso)."""
-    return [t for t, seq in FLUJOS.items() if paso in seq and seq[-1] != paso]
+    """(tipo de orden, tipo de flujo) en los que el paso se puede anular (nunca el último)."""
+    return [(o, f) for o, f, seq in combinaciones() if paso in seq and seq[-1] != paso]
 
 
 def sufijos_de_paso(paso):
@@ -205,7 +280,7 @@ def sufijos_de_paso(paso):
 
 def estados_finales():
     """Último paso de cada flujo en Completado => documento enviado (docstatus 1)."""
-    return {estado(seq[-1], COMPLETADO) for seq in FLUJOS.values()}
+    return {estado(seq[-1], COMPLETADO) for _o, _f, seq in combinaciones()}
 
 
 def construir_estados():
@@ -241,71 +316,64 @@ def estilos_estados():
 
 
 def construir_transiciones():
+    """Transiciones de todos los flujos. Una misma transición (p. ej. en un paso
+    compartido) se genera una sola vez con la condición de todos los flujos que la usan."""
+    entradas = OrderedDict()
+
+    def agregar(origen, accion, destino, roles_permitidos, orden, flujo, extra=None):
+        clave = (origen, accion, destino, tuple(OrderedDict.fromkeys(roles_permitidos)))
+        entradas.setdefault(clave, []).append((orden, flujo, extra))
+
+    arranque = [ROL_RECEPCION, ROL_SUPERVISOR]
+    for orden, flujo, seq in combinaciones():
+        # 1) Arranque: Nueva -> Recolección (si requiere) o directo al primer paso
+        if seq[0] == PASO_RECOLECCION and len(seq) > 1:
+            agregar(ESTADO_INICIAL, "Programar Recolección", estado(seq[0], EN_PROCESO), arranque,
+                    orden, flujo, "doc.requiere_recoleccion")
+            agregar(ESTADO_INICIAL, f"Enviar a {seq[1]}", estado(seq[1], EN_PROCESO), arranque,
+                    orden, flujo, "not doc.requiere_recoleccion")
+        else:
+            accion = "Programar Recolección" if seq[0] == PASO_RECOLECCION else f"Enviar a {seq[0]}"
+            agregar(ESTADO_INICIAL, accion, estado(seq[0], EN_PROCESO), arranque, orden, flujo)
+
+        # 2) Movimientos internos de cada paso (En Proceso -> Completado / Anulado)
+        for paso in seq:
+            for origen, accion, destino in TRANSICIONES_INTERNAS:
+                if destino == ANULADO and paso == seq[-1]:
+                    continue
+                agregar(estado(paso, origen), accion, estado(paso, destino),
+                        [PASOS[paso], ROL_SUPERVISOR], orden, flujo)
+
+        # 3) Avance al siguiente paso (desde Completado o Anulado)
+        for actual, siguiente in zip(seq, seq[1:]):
+            for sufijo in (COMPLETADO, ANULADO):
+                agregar(estado(actual, sufijo), f"Enviar a {siguiente}", estado(siguiente, EN_PROCESO),
+                        [PASOS[actual], ROL_SUPERVISOR], orden, flujo)
+
+        # 4) Retrabajo desde el paso de calidad del tipo de orden
+        calidad, pasos_retrabajo = RETRABAJO.get(orden, (None, []))
+        if calidad in seq:
+            for paso in pasos_retrabajo:
+                if paso in seq:
+                    agregar(estado(calidad, EN_PROCESO), f"Retrabajo a {paso}", estado(paso, EN_PROCESO),
+                            [PASOS[calidad], ROL_SUPERVISOR], orden, flujo)
+
     filas = []
 
-    def agregar(origen, accion, destino, roles_permitidos, condicion=None):
-        if accion not in ACCIONES_GENERALES:
-            condicion = y(CONDICION_TIPO_ORDEN, condicion)
-        for rol in OrderedDict.fromkeys(roles_permitidos):
-            filas.append({
-                "state": origen,
-                "action": accion,
-                "next_state": destino,
-                "allowed": rol,
-                "allow_self_approval": 1,
-                "condition": condicion,
-            })
+    def fila(origen, accion, destino, rol, condicion):
+        filas.append({"state": origen, "action": accion, "next_state": destino, "allowed": rol,
+                      "allow_self_approval": 1, "condition": condicion})
 
-    # 1) Arranque: Nueva -> Recolección (si requiere) o directo al siguiente paso
-    arranques = OrderedDict()
-    for tipo, seq in FLUJOS.items():
-        if seq[0] == PASO_RECOLECCION and len(seq) > 1:
-            arranques.setdefault((seq[0], "doc.requiere_recoleccion"), []).append(tipo)
-            arranques.setdefault((seq[1], "not doc.requiere_recoleccion"), []).append(tipo)
-        else:
-            arranques.setdefault((seq[0], None), []).append(tipo)
-    for (paso, cond_recoleccion), tipos in arranques.items():
-        accion = "Programar Recolección" if paso == PASO_RECOLECCION else f"Enviar a {paso}"
-        agregar(ESTADO_INICIAL, accion, estado(paso, EN_PROCESO),
-                [ROL_RECEPCION, ROL_SUPERVISOR],
-                y(condicion_tipos(tipos), cond_recoleccion))
+    for (origen, accion, destino, roles_permitidos), combos in entradas.items():
+        condicion = condicion_combos(combos)
+        for rol in roles_permitidos:
+            fila(origen, accion, destino, rol, condicion)
 
-    # 2) Movimientos internos de cada paso (En Proceso -> Completado / Anulado)
-    for paso in pasos_usados():
-        for origen, accion, destino in TRANSICIONES_INTERNAS:
-            condicion = None
-            if destino == ANULADO:
-                if not tipos_que_anulan(paso):
-                    continue
-                condicion = condicion_tipos(tipos_que_anulan(paso))
-            agregar(estado(paso, origen), accion, estado(paso, destino),
-                    [PASOS[paso], ROL_SUPERVISOR], condicion)
-
-    # 3) Avance al siguiente paso (desde Completado o Anulado) según cada tipo
-    avances = OrderedDict()
-    for tipo, seq in FLUJOS.items():
-        for actual, siguiente in zip(seq, seq[1:]):
-            avances.setdefault((actual, siguiente), []).append(tipo)
-    for (actual, siguiente), tipos in avances.items():
-        for sufijo in (COMPLETADO, ANULADO):
-            agregar(estado(actual, sufijo), f"Enviar a {siguiente}",
-                    estado(siguiente, EN_PROCESO),
-                    [PASOS[actual], ROL_SUPERVISOR], condicion_tipos(tipos))
-
-    # 4) Retrabajo desde Control de calidad
-    for paso in PASOS_RETRABAJO:
-        tipos = [t for t, seq in FLUJOS.items() if paso in seq and PASO_CALIDAD in seq]
-        if tipos:
-            agregar(estado(PASO_CALIDAD, EN_PROCESO), f"Retrabajo a {paso}",
-                    estado(paso, EN_PROCESO),
-                    [PASOS[PASO_CALIDAD], ROL_SUPERVISOR], condicion_tipos(tipos))
-
-    # 5) Cancelación (desde cualquier estado no enviado) y reactivación
-    for fila in construir_estados():
-        if fila["doc_status"] == "0" and fila["state"] != ESTADO_CANCELADA:
-            agregar(fila["state"], "Cancelar", ESTADO_CANCELADA, [ROL_SUPERVISOR])
-    agregar(ESTADO_CANCELADA, "Reactivar", ESTADO_INICIAL, [ROL_SUPERVISOR])
-
+    # 5) Cancelación (desde cualquier estado no enviado) y reactivación: cualquier tipo de orden
+    for e in construir_estados():
+        if e["doc_status"] == "0" and e["state"] != ESTADO_CANCELADA:
+            fila(e["state"], "Cancelar", ESTADO_CANCELADA, ROL_SUPERVISOR, None)
+    fila(ESTADO_CANCELADA, "Reactivar", ESTADO_INICIAL, ROL_SUPERVISOR, None)
     return filas
 
 
@@ -315,14 +383,15 @@ def acciones():
 
 def validar_configuracion():
     errores = []
-    for tipo, seq in FLUJOS.items():
+    for orden, tipo, seq in combinaciones():
+        nombre = f"{orden} / {tipo}"
         if not seq:
-            errores.append(f"El flujo '{tipo}' no tiene pasos.")
+            errores.append(f"El flujo '{nombre}' no tiene pasos.")
         for paso in seq:
             if paso not in PASOS:
-                errores.append(f"El paso '{paso}' del flujo '{tipo}' no existe en PASOS.")
+                errores.append(f"El paso '{paso}' del flujo '{nombre}' no existe en PASOS.")
         if len(seq) != len(set(seq)):
-            errores.append(f"El flujo '{tipo}' repite pasos.")
+            errores.append(f"El flujo '{nombre}' repite pasos.")
     # Un estado final (docstatus 1) no puede tener avances posteriores
     finales = estados_finales()
     for t in construir_transiciones():
@@ -336,8 +405,45 @@ def validar_configuracion():
 # Reglas de transición de ejemplo (editables / desactivables desde el Desk)
 # ==========================================================================
 REGLAS_EJEMPLO = [
+    # --- Mecánica ---
+    {
+        "descripcion": "Mecánica: diagnóstico registrado",
+        "tipo_orden": TIPO_ORDEN_MECANICA, "tipo_flujo": "Todos",
+        "estado_destino": estado("Diagnóstico", "Completado"),
+        "condicion": "doc.diagnostico",
+        "mensaje": "Registra el diagnóstico antes de completar el paso.",
+    },
+    {
+        "descripcion": "Mecánica: cotización creada",
+        "tipo_orden": TIPO_ORDEN_MECANICA, "tipo_flujo": "Todos",
+        "estado_destino": estado("Cotización", "Completado"),
+        "condicion": "doc.cotizacion",
+        "mensaje": "Crea la cotización (Crear → Cotización) antes de completar el paso.",
+    },
+    {
+        "descripcion": "Mecánica: autorización del cliente",
+        "tipo_orden": TIPO_ORDEN_MECANICA, "tipo_flujo": "Todos",
+        "estado_destino": estado("Autorización del cliente", "Completado"),
+        "condicion": "doc.presupuesto_aprobado",
+        "mensaje": "El cliente debe autorizar: envía la orden de venta (o marca Presupuesto aprobado).",
+    },
+    {
+        "descripcion": "Mecánica: hallazgo documentado",
+        "tipo_orden": TIPO_ORDEN_MECANICA, "tipo_flujo": "Todos",
+        "estado_destino": estado("Hallazgo adicional", "Completado"),
+        "condicion": "doc.hallazgo_adicional",
+        "mensaje": "Describe el hallazgo adicional, o anula el paso si no hubo.",
+    },
+    {
+        "descripcion": "Mecánica: control de calidad y prueba de ruta",
+        "tipo_orden": TIPO_ORDEN_MECANICA, "tipo_flujo": "Todos",
+        "estado_destino": estado("Control de calidad y ruta", "Completado"),
+        "condicion": "doc.checklist_calidad_ok",
+        "mensaje": "Marca el checklist de calidad y prueba de ruta como aprobado, o regresa la unidad a Reparación.",
+    },
     {
         "descripcion": "Recepción: valuación aprobada",
+        "tipo_orden": TIPO_ORDEN_FLUJO,
         "tipo_flujo": "Todos", "estado_destino": estado("Recepción", "Completado"),
         "condicion": "doc.valuacion_aprobada",
         "mensaje": "Carga y envía (aprueba) la valuación de la orden antes de completar la recepción. "
@@ -351,24 +457,28 @@ REGLAS_EJEMPLO = [
     },
     {
         "descripcion": "Aseguradora: siniestro autorizado antes de Carrocería",
+        "tipo_orden": TIPO_ORDEN_FLUJO,
         "tipo_flujo": "Aseguradora", "paso": "Carrocería",
         "condicion": "doc.numero_siniestro and doc.autorizacion_aseguradora",
         "mensaje": "No se puede pasar a Carrocería sin número de siniestro y autorización de la aseguradora.",
     },
     {
         "descripcion": "Agencia: orden de la agencia antes de Carrocería",
+        "tipo_orden": TIPO_ORDEN_FLUJO,
         "tipo_flujo": "Agencia", "paso": "Carrocería",
         "condicion": "doc.orden_agencia",
         "mensaje": "Captura el número de orden de la agencia antes de pasar a Carrocería.",
     },
     {
         "descripcion": "Particular: presupuesto aprobado antes de Carrocería",
+        "tipo_orden": TIPO_ORDEN_FLUJO,
         "tipo_flujo": "Particular", "paso": "Carrocería",
         "condicion": "doc.presupuesto_aprobado",
         "mensaje": "El cliente debe aprobar el presupuesto antes de pasar a Carrocería.",
     },
     {
         "descripcion": "Calidad: checklist aprobado",
+        "tipo_orden": TIPO_ORDEN_FLUJO,
         "tipo_flujo": "Todos", "estado_destino": estado("Control de calidad", "Completado"),
         "condicion": "doc.checklist_calidad_ok",
         "mensaje": "Marca el checklist de calidad como aprobado, o envía la unidad a retrabajo.",
@@ -516,9 +626,8 @@ def crear_workflow(reconstruir=False):
     for fila in construir_transiciones():
         clave = (fila["state"], fila["action"], fila["next_state"], fila["allowed"])
         previa = condiciones_previas.get(clave)
-        # Una condición previa que la generada ya incluye venía del generador; otra
-        # distinta la escribió alguien en el Desk y se conserva
-        if previa and previa not in (fila["condition"] or ""):
+        # Las condiciones generadas se reemplazan; una escrita en el Desk se conserva
+        if previa and not es_condicion_generada(previa) and previa not in (fila["condition"] or ""):
             fila["condition"] = y(fila["condition"], previa)
         wf.append("transitions", fila)
 
@@ -532,6 +641,6 @@ def crear_reglas_ejemplo():
         if frappe.db.exists(DOCTYPE_REGLAS, {"descripcion": regla["descripcion"]}):
             continue
         datos = {"doctype": DOCTYPE_REGLAS, "activo": 1, "tipo_regla": "Bloquear",
-                 "paso": "Todos", "prioridad": 10}
+                 "paso": "Todos", "tipo_orden": "Todos", "prioridad": 10}
         datos.update(regla)
         frappe.get_doc(datos).insert(ignore_permissions=True)
