@@ -37,7 +37,8 @@ def crear_proyecto(doc):
         "doctype": "Project",
         "project_name": f"{doc.name} - {doc.cliente_nombre or doc.cliente}",
         "company": doc.company,
-        "customer": doc.cliente,
+        # Sin customer: ERPNext exige que todo documento del proyecto sea de ese
+        # cliente, y Aseguradora factura a dos (aseguradora y asegurado).
         "cost_center": centro_costo if frappe.db.exists("Cost Center", centro_costo) else None,
         "expected_start_date": getdate(doc.fecha_ingreso) if doc.fecha_ingreso else None,
         "status": "Open",
