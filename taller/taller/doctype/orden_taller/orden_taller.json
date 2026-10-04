@@ -37,7 +37,6 @@
   "conceptos",
   "subtotal",
   "sec_agencia",
-  "agencia",
   "orden_agencia",
   "col_agencia",
   "asesor_agencia",
@@ -182,7 +181,8 @@
    "fieldtype": "Link",
    "options": "Customer",
    "reqd": 1,
-   "in_standard_filter": 1
+   "in_standard_filter": 1,
+   "description": "Quien paga y recibe la factura. En Agencia, la agencia."
   },
   {
    "fieldname": "cliente_nombre",
@@ -300,13 +300,6 @@
    "fieldtype": "Section Break",
    "label": "Agencia",
    "depends_on": "eval:doc.tipo_flujo=='Agencia'"
-  },
-  {
-   "fieldname": "agencia",
-   "fieldtype": "Link",
-   "label": "Agencia",
-   "mandatory_depends_on": "eval:doc.tipo_flujo=='Agencia'",
-   "options": "Customer"
   },
   {
    "fieldname": "orden_agencia",
@@ -624,7 +617,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-04 16:00:00.000000",
+ "modified": "2026-10-04 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Orden Taller",

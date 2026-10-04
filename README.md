@@ -86,7 +86,7 @@ La reconstrucción **conserva las condiciones** que hayas escrito a mano en las 
 ## Contabilidad: clientes, facturas y cobros (ERPNext)
 
 La orden no lleva contabilidad propia: genera y sigue los documentos estándar de ERPNext,
-que hacen los asientos (`taller/erp/documentos.py`). Cliente, agencia y aseguradora son
+que hacen los asientos (`taller/erp/documentos.py`). Cliente y aseguradora son
 **Customer** (grupos Particular, Agencia, Aseguradora) y el vehículo es un **Vehiculo Taller**.
 
 Desde el botón **Crear** de la orden:
@@ -98,7 +98,8 @@ Desde el botón **Crear** de la orden:
 | Cobro | Payment Entry | Anticipo contra la orden de venta, o pago contra la factura |
 | Factura | Sales Invoice | Aplica anticipos; descarga inventario si hay materiales |
 
-Quién paga: **Particular** → cliente; **Agencia** → agencia; **Aseguradora** → dos órdenes de
+Quién paga: **Particular** → cliente; **Agencia** → el cliente, que es la agencia (el dueño
+del vehículo queda en el Vehículo); **Aseguradora** → dos órdenes de
 venta y dos facturas: la aseguradora (conceptos menos el deducible) y el cliente (artículo
 `DEDUCIBLE`). El deducible se captura con IVA.
 

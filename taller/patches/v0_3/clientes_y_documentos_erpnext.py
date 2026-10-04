@@ -2,7 +2,7 @@
 Liga la Orden Taller con ERPNext:
 
   * campos `orden_taller` en Cotización, Orden de venta y Factura de venta,
-  * cliente, agencia y aseguradora pasan de texto a Customer,
+  * cliente y aseguradora pasan de texto a Customer (agencia: ver v0_5),
   * vehículo como DocType propio (Vehiculo Taller),
   * la regla de Facturación pide facturas enviadas en lugar del folio a mano.
 """
@@ -29,16 +29,15 @@ def execute():
 
     company = frappe.defaults.get_global_default("company")
     for orden in frappe.get_all(conf.DOCTYPE, fields=["name", "company", "cliente", "cliente_nombre",
-                                                     "agencia", "aseguradora", "vehiculo", "placas",
+                                                     "aseguradora", "vehiculo", "placas",
                                                      "vin", "marca", "modelo", "anio", "color"]):
         cambios = {}
         if not orden.company and company:
             cambios["company"] = company
         if not orden.cliente and orden.cliente_nombre:
             cambios["cliente"] = asegurar_cliente(orden.cliente_nombre, "Particular")
-        for campo, grupo in (("agencia", "Agencia"), ("aseguradora", "Aseguradora")):
-            if orden.get(campo) and not frappe.db.exists("Customer", orden.get(campo)):
-                cambios[campo] = asegurar_cliente(orden.get(campo), grupo)
+        if orden.aseguradora and not frappe.db.exists("Customer", orden.aseguradora):
+            cambios["aseguradora"] = asegurar_cliente(orden.aseguradora, "Aseguradora")
         if not orden.vehiculo and (orden.placas or orden.vin):
             cambios["vehiculo"] = crear_vehiculo(orden, cambios.get("cliente") or orden.cliente)
         if cambios:

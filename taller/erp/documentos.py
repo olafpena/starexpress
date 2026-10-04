@@ -7,7 +7,7 @@ Fase 1: la Orden Taller usa los documentos estándar de ERPNext.
 Quién paga según el tipo de flujo:
 
     Particular  -> cliente
-    Agencia     -> agencia
+    Agencia     -> cliente (la agencia; el dueño del vehículo está en el Vehículo)
     Aseguradora -> aseguradora (conceptos menos el deducible) y cliente (deducible)
 
 Todos los documentos llevan el campo `orden_taller`. Al enviarlos, cancelarlos o
@@ -50,7 +50,11 @@ def crear_campos_personalizados():
 # Datos de la orden
 # ==========================================================================
 def pagador(doc):
-    return {"Agencia": doc.agencia, ASEGURADORA: doc.aseguradora}.get(doc.tipo_flujo, doc.cliente)
+    return doc.aseguradora if doc.tipo_flujo == ASEGURADORA else doc.cliente
+
+
+def etiqueta_pagador(doc):
+    return "Aseguradora" if doc.tipo_flujo == ASEGURADORA else "Cliente"
 
 
 def plantilla_impuestos(company):
@@ -103,8 +107,8 @@ def _vigente(doctype, nombre):
 def calcular_montos(doc):
     """Montos de la orden a partir de sus órdenes de venta, facturas y pagos enviados.
 
-    saldo_pendiente es lo que debe quien paga en el paso Cobro: el cliente (o la
-    agencia), o el deducible en Aseguradora. Mientras su orden de venta no esté
+    saldo_pendiente es lo que debe quien paga en el paso Cobro: el cliente (que en
+    Agencia es la agencia), o el deducible en Aseguradora. Mientras su orden de venta no esté
     enviada, el saldo es el importe esperado.
     """
     total = pagado = ingresos = 0
@@ -206,8 +210,7 @@ def crear_cotizacion(orden):
     doc = _orden(orden)
     if _vigente("Quotation", doc.cotizacion):
         frappe.throw(_("La orden ya tiene la cotización {0}.").format(doc.cotizacion))
-    cliente = _requerir(pagador(doc), {"Agencia": "Agencia", ASEGURADORA: "Aseguradora"}
-                        .get(doc.tipo_flujo, "Cliente"))
+    cliente = _requerir(pagador(doc), etiqueta_pagador(doc))
 
     q = frappe.new_doc("Quotation")
     q.quotation_to = "Customer"
@@ -232,8 +235,7 @@ def crear_ordenes_venta(orden):
     creadas = []
 
     if not _vigente("Sales Order", doc.orden_venta):
-        cliente = _requerir(pagador(doc), {"Agencia": "Agencia", ASEGURADORA: "Aseguradora"}
-                            .get(doc.tipo_flujo, "Cliente"))
+        cliente = _requerir(pagador(doc), etiqueta_pagador(doc))
         if _enviado("Quotation", doc.cotizacion, []):
             so = make_sales_order(doc.cotizacion)
             for item in so.items:

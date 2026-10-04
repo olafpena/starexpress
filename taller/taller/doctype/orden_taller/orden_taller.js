@@ -9,14 +9,17 @@ const METODOS = "taller.erp.documentos";
 
 frappe.ui.form.on("Orden Taller", {
 	setup(frm) {
-		frm.set_query("agencia", () => ({ filters: { customer_group: "Agencia" } }));
 		frm.set_query("aseguradora", () => ({ filters: { customer_group: "Aseguradora" } }));
-		frm.set_query("vehiculo", () => ({ filters: frm.doc.cliente ? { cliente: frm.doc.cliente } : {} }));
+		// En Agencia el cliente es la agencia, no el dueño del vehículo: sin filtro
+		frm.set_query("vehiculo", () => ({
+			filters: frm.doc.cliente && frm.doc.tipo_flujo !== "Agencia" ? { cliente: frm.doc.cliente } : {},
+		}));
 		frm.set_query("item_code", "conceptos", () => ({ filters: { disabled: 0, is_sales_item: 1 } }));
 	},
 	refresh(frm) {
 		frm.trigger("botones_erpnext");
 		frm.set_df_property("conceptos", "read_only", frm.doc.orden_venta ? 1 : 0);
+		frm.set_df_property("cliente", "label", frm.doc.tipo_flujo === "Agencia" ? __("Agencia (cliente)") : __("Cliente"));
 		if (frm.doc.tipo_flujo) {
 			frm.page.set_indicator(
 				`${frm.doc.tipo_flujo} · ${frm.doc.paso_actual || "Nueva"}`,
