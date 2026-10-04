@@ -63,6 +63,26 @@ ARTICULOS = [
 ]
 ARTICULO_DEDUCIBLE = "DEDUCIBLE"
 
+# Artículos que reciben las partidas de la valuación (taller/valuacion) al pasarlas a
+# los conceptos de la orden. No son de inventario: la descripción y el precio vienen
+# de la valuación, y el consumo real se registra aparte (Consumo de materiales).
+# (código, nombre, grupo, cuenta de ingreso)
+ARTICULOS_VALUACION = [
+    ("VAL-REF", "Refacción (según valuación)", GRUPO_MATERIALES, CUENTA_INGRESO_MATERIALES),
+    ("VAL-MATP", "Materiales de pintura (según valuación)", GRUPO_MATERIALES, CUENTA_INGRESO_MATERIALES),
+    ("VAL-MATR", "Materiales de reparación (según valuación)", GRUPO_MATERIALES, CUENTA_INGRESO_MATERIALES),
+    ("VAL-OTRO", "Otros cargos (según valuación)", GRUPO_SERVICIOS, CUENTA_INGRESO_SERVICIOS),
+]
+# Tipo de partida de la valuación -> artículo del concepto
+ARTICULO_POR_TIPO = {
+    "Refacción": "VAL-REF",
+    "Mano de obra hojalatería": "MO-HOJ",
+    "Mano de obra pintura": "MO-PINT",
+    "Material de pintura": "VAL-MATP",
+    "Material de reparación": "VAL-MATR",
+    "Otro": "VAL-OTRO",
+}
+
 # Consumibles: se usan en la reparación pero no se facturan (salida de material
 # contra el proyecto de la orden). (código, nombre, unidad)
 GRUPO_CONSUMIBLES = "Consumibles Taller"
@@ -148,6 +168,9 @@ def configurar(company="StarExpress"):
         ingreso = cuenta(CUENTA_INGRESO_MATERIALES if inventariable else CUENTA_INGRESO_SERVICIOS)
         crear_articulo(codigo, nombre, grupo, uom, precio, inventariable, company,
                        ingreso, centro_costo, almacen, costo)
+    for codigo, nombre, grupo, cuenta_ingreso in ARTICULOS_VALUACION:
+        crear_articulo(codigo, nombre, grupo, "Nos", 0, 0, company, cuenta(cuenta_ingreso),
+                       centro_costo, almacen, costo)
     for codigo, nombre, uom in CONSUMIBLES:
         crear_articulo(codigo, nombre, GRUPO_CONSUMIBLES, uom, 0, 1, company,
                        cuenta(CUENTA_INGRESO_MATERIALES), centro_costo, almacen, costo, venta=0)

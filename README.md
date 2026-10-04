@@ -83,6 +83,25 @@ bench --site <sitio> execute taller.flujo.configuracion.instalar --kwargs "{'rec
 
 La reconstrucción **conserva las condiciones** que hayas escrito a mano en las transiciones.
 
+## Valuación (Audatex o captura manual)
+
+Cada orden necesita una **Valuacion Taller** aprobada (enviada) para completar **Recepción**
+(regla "Recepción: valuación aprobada"). Se crea desde **Crear → Valuación** en la orden.
+
+- **Agencia / Aseguradora**: adjunta el *Reporte Completo* de Audatex (PDF). Se lee solo
+  (`taller/valuacion/audatex.py`): expediente, vehículo, partidas y totales del documento.
+  Solo se puede aprobar si las partidas cuadran con la *Suma total sin IVA* del PDF (±$1).
+- **Particular**: la misma forma, con las partidas capturadas a mano.
+
+Partidas: Refacción, Mano de obra hojalatería / pintura (cantidad en horas = UT ÷ UT por
+hora), Material de pintura / reparación y Otro, con descuento por partida.
+
+Al aprobarla, la orden recibe el vehículo (lo crea si no existe), en Aseguradora el
+siniestro, la póliza, la autorización y el monto autorizado, y las partidas pasan a los
+**conceptos** (artículos `MO-HOJ`, `MO-PINT`, `VAL-REF`, `VAL-MATP`, `VAL-MATR`, `VAL-OTRO`) si aún
+no hay orden de venta. Solo puede haber una valuación vigente por orden; para cambiarla se
+cancela y se modifica (*amend*).
+
 ## Contabilidad: clientes, facturas y cobros (ERPNext)
 
 La orden no lleva contabilidad propia: genera y sigue los documentos estándar de ERPNext,
@@ -175,6 +194,8 @@ taller/
 │   ├── configuracion_empresa.py  # fase 0: compañía, cuentas, catálogo, costos por hora
 │   ├── costeo.py                 # fase 2: proyecto, timesheets, consumos, margen
 │   └── documentos.py             # cotización, orden de venta, factura, cobro
+├── valuacion/
+│   └── audatex.py                # lector del PDF de Audatex
 ├── flujo/
 │   ├── configuracion.py   # pasos, estados, FLUJOS por tipo, generador e instalación
 │   ├── pasos.py           # tabla de pasos y horas reales
@@ -182,6 +203,7 @@ taller/
 └── taller/doctype/
     ├── orden_taller/
     ├── paso_orden_taller/
+    ├── valuacion_taller/
     └── regla_transicion_taller/
 ```
 

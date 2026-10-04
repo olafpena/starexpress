@@ -33,6 +33,7 @@ NOMBRE_WORKFLOW = "Flujo Hojalatería y Pintura"
 DOCTYPE = "Orden Taller"
 DOCTYPE_REGLAS = "Regla Transicion Taller"
 DOCTYPE_VEHICULO = "Vehiculo Taller"
+DOCTYPE_VALUACION = "Valuacion Taller"
 CAMPO_ESTADO = "workflow_state"
 CAMPO_PASO = "paso_actual"
 CAMPO_PASOS = "pasos"
@@ -315,6 +316,13 @@ def validar_configuracion():
 # ==========================================================================
 REGLAS_EJEMPLO = [
     {
+        "descripcion": "Recepción: valuación aprobada",
+        "tipo_flujo": "Todos", "estado_destino": estado("Recepción", "Completado"),
+        "condicion": "doc.valuacion_aprobada",
+        "mensaje": "Carga y envía (aprueba) la valuación de la orden antes de completar la recepción. "
+                   "En Agencia y Aseguradora, adjunta el PDF de Audatex; en Particular, captura las partidas.",
+    },
+    {
         "descripcion": "Recepción: identificar el vehículo",
         "tipo_flujo": "Todos", "estado_destino": estado("Recepción", "Completado"),
         "condicion": "doc.placas or doc.vin",
@@ -440,6 +448,18 @@ def asignar_permisos():
     add_permission(DOCTYPE_REGLAS, ROL_SUPERVISOR, 0)
     for ptype in ["read", "write", "create", "delete", "report"]:
         update_permission_property(DOCTYPE_REGLAS, ROL_SUPERVISOR, 0, ptype, 1)
+
+    # Valuación: la carga y aprueba recepción; el jefe además cancela y modifica
+    for rol in roles():
+        add_permission(DOCTYPE_VALUACION, rol, 0)
+        if rol == ROL_SUPERVISOR:
+            ptypes = ["read", "write", "create", "submit", "cancel", "amend", "delete", "report", "print"]
+        elif rol == ROL_RECEPCION:
+            ptypes = ["read", "write", "create", "submit", "report", "print"]
+        else:
+            ptypes = ["read"]
+        for ptype in ptypes:
+            update_permission_property(DOCTYPE_VALUACION, rol, 0, ptype, 1)
 
     for rol in roles():
         add_permission(DOCTYPE_VEHICULO, rol, 0)

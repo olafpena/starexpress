@@ -1,0 +1,424 @@
+{
+ "actions": [],
+ "creation": "2026-10-04 20:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_general",
+  "orden_taller",
+  "tipo_flujo",
+  "cliente_nombre",
+  "company",
+  "col_general",
+  "origen",
+  "archivo_pdf",
+  "estado_valuacion",
+  "fecha_valuacion",
+  "sec_expediente",
+  "numero_reclamo",
+  "numero_expediente",
+  "numero_poliza",
+  "version_valuacion",
+  "proveedor",
+  "col_expediente",
+  "causa",
+  "fecha_accidente",
+  "fecha_inspeccion",
+  "fecha_autorizacion",
+  "autorizado_por",
+  "taller_reparacion",
+  "sec_vehiculo",
+  "marca",
+  "modelo",
+  "submodelo",
+  "anio",
+  "col_vehiculo",
+  "placas",
+  "vin",
+  "color",
+  "valor_mercado",
+  "sec_partidas",
+  "ut_por_hora",
+  "col_partidas",
+  "tarifa_hora",
+  "sec_tabla",
+  "partidas",
+  "sec_totales",
+  "total_refacciones",
+  "total_mano_obra",
+  "total_materiales",
+  "total_otros",
+  "total_deducciones",
+  "col_totales",
+  "subtotal",
+  "iva",
+  "total",
+  "col_documento",
+  "subtotal_documento",
+  "total_documento",
+  "diferencia",
+  "sec_notas",
+  "notas",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_general",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "orden_taller",
+   "fieldtype": "Link",
+   "label": "Orden Taller",
+   "options": "Orden Taller",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "tipo_flujo",
+   "fieldtype": "Data",
+   "label": "Tipo de flujo",
+   "fetch_from": "orden_taller.tipo_flujo",
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "cliente_nombre",
+   "fieldtype": "Data",
+   "label": "Cliente",
+   "fetch_from": "orden_taller.cliente_nombre",
+   "read_only": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Compañía",
+   "options": "Company",
+   "fetch_from": "orden_taller.company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_general",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "origen",
+   "fieldtype": "Select",
+   "label": "Origen",
+   "options": "Audatex\nCaptura manual",
+   "reqd": 1,
+   "default": "Captura manual",
+   "description": "Agencia y Aseguradora: PDF de Audatex. Particular: captura manual."
+  },
+  {
+   "fieldname": "archivo_pdf",
+   "fieldtype": "Attach",
+   "label": "PDF de Audatex",
+   "depends_on": "eval:doc.origen==\"Audatex\"",
+   "mandatory_depends_on": "eval:doc.origen==\"Audatex\""
+  },
+  {
+   "fieldname": "estado_valuacion",
+   "fieldtype": "Data",
+   "label": "Estado en Audatex",
+   "depends_on": "eval:doc.origen==\"Audatex\"",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fecha_valuacion",
+   "fieldtype": "Date",
+   "label": "Fecha",
+   "default": "Today"
+  },
+  {
+   "fieldname": "sec_expediente",
+   "fieldtype": "Section Break",
+   "label": "Expediente",
+   "collapsible": 1,
+   "depends_on": "eval:doc.origen==\"Audatex\""
+  },
+  {
+   "fieldname": "numero_reclamo",
+   "fieldtype": "Data",
+   "label": "Número de reclamo",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "numero_expediente",
+   "fieldtype": "Data",
+   "label": "Número de expediente"
+  },
+  {
+   "fieldname": "numero_poliza",
+   "fieldtype": "Data",
+   "label": "Número de póliza"
+  },
+  {
+   "fieldname": "version_valuacion",
+   "fieldtype": "Data",
+   "label": "Versión"
+  },
+  {
+   "fieldname": "proveedor",
+   "fieldtype": "Data",
+   "label": "Proveedor de trabajo",
+   "description": "Aseguradora o agencia que emite la valuación."
+  },
+  {
+   "fieldname": "col_expediente",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "causa",
+   "fieldtype": "Data",
+   "label": "Causa del accidente"
+  },
+  {
+   "fieldname": "fecha_accidente",
+   "fieldtype": "Date",
+   "label": "Fecha del accidente"
+  },
+  {
+   "fieldname": "fecha_inspeccion",
+   "fieldtype": "Date",
+   "label": "Fecha de inspección"
+  },
+  {
+   "fieldname": "fecha_autorizacion",
+   "fieldtype": "Date",
+   "label": "Fecha de autorización"
+  },
+  {
+   "fieldname": "autorizado_por",
+   "fieldtype": "Data",
+   "label": "Autorizado por"
+  },
+  {
+   "fieldname": "taller_reparacion",
+   "fieldtype": "Data",
+   "label": "Taller de reparación"
+  },
+  {
+   "fieldname": "sec_vehiculo",
+   "fieldtype": "Section Break",
+   "label": "Vehículo",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "marca",
+   "fieldtype": "Data",
+   "label": "Marca"
+  },
+  {
+   "fieldname": "modelo",
+   "fieldtype": "Data",
+   "label": "Modelo"
+  },
+  {
+   "fieldname": "submodelo",
+   "fieldtype": "Data",
+   "label": "Versión del modelo"
+  },
+  {
+   "fieldname": "anio",
+   "fieldtype": "Int",
+   "label": "Año"
+  },
+  {
+   "fieldname": "col_vehiculo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "placas",
+   "fieldtype": "Data",
+   "label": "Placas"
+  },
+  {
+   "fieldname": "vin",
+   "fieldtype": "Data",
+   "label": "VIN"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Data",
+   "label": "Color"
+  },
+  {
+   "fieldname": "valor_mercado",
+   "fieldtype": "Currency",
+   "label": "Valor de mercado"
+  },
+  {
+   "fieldname": "sec_partidas",
+   "fieldtype": "Section Break",
+   "label": "Partidas"
+  },
+  {
+   "fieldname": "ut_por_hora",
+   "fieldtype": "Float",
+   "label": "UT por hora",
+   "default": "10",
+   "depends_on": "eval:doc.origen==\"Audatex\""
+  },
+  {
+   "fieldname": "col_partidas",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tarifa_hora",
+   "fieldtype": "Currency",
+   "label": "Tarifa por hora",
+   "description": "Precio por hora de mano de obra; se usa al agregar partidas de mano de obra."
+  },
+  {
+   "fieldname": "sec_tabla",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "partidas",
+   "fieldtype": "Table",
+   "label": "Partidas",
+   "options": "Partida Valuacion Taller"
+  },
+  {
+   "fieldname": "sec_totales",
+   "fieldtype": "Section Break",
+   "label": "Totales"
+  },
+  {
+   "fieldname": "total_refacciones",
+   "fieldtype": "Currency",
+   "label": "Refacciones",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_mano_obra",
+   "fieldtype": "Currency",
+   "label": "Mano de obra",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_materiales",
+   "fieldtype": "Currency",
+   "label": "Materiales",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_otros",
+   "fieldtype": "Currency",
+   "label": "Otros",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_deducciones",
+   "fieldtype": "Currency",
+   "label": "Deducciones (descuentos)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_totales",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subtotal",
+   "fieldtype": "Currency",
+   "label": "Subtotal (sin IVA)",
+   "bold": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "iva",
+   "fieldtype": "Currency",
+   "label": "IVA",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Total (con IVA)",
+   "bold": 1,
+   "in_list_view": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_documento",
+   "fieldtype": "Column Break",
+   "depends_on": "eval:doc.origen==\"Audatex\""
+  },
+  {
+   "fieldname": "subtotal_documento",
+   "fieldtype": "Currency",
+   "label": "Subtotal según Audatex",
+   "depends_on": "eval:doc.origen==\"Audatex\"",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_documento",
+   "fieldtype": "Currency",
+   "label": "Total según Audatex",
+   "depends_on": "eval:doc.origen==\"Audatex\"",
+   "read_only": 1
+  },
+  {
+   "fieldname": "diferencia",
+   "fieldtype": "Currency",
+   "label": "Diferencia",
+   "depends_on": "eval:doc.origen==\"Audatex\"",
+   "read_only": 1,
+   "description": "Subtotal de las partidas menos el subtotal del PDF. Debe ser 0 para aprobar."
+  },
+  {
+   "fieldname": "sec_notas",
+   "fieldtype": "Section Break",
+   "label": "Notas",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "notas",
+   "fieldtype": "Text",
+   "label": "Notas de la aseguradora / observaciones"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Modificado desde",
+   "options": "Valuacion Taller",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-04 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Valuacion Taller",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "share": 1
+  }
+ ],
+ "is_submittable": 1,
+ "autoname": "format:VAL-{YYYY}-{#####}",
+ "naming_rule": "Expression",
+ "title_field": "cliente_nombre",
+ "show_title_field_in_link": 1,
+ "track_changes": 1,
+ "search_fields": "orden_taller,numero_reclamo,placas"
+}

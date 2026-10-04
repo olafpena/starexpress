@@ -6,6 +6,7 @@
  "field_order": [
   "item_code",
   "item_name",
+  "descripcion",
   "qty",
   "uom",
   "rate",
@@ -19,7 +20,7 @@
    "options": "Item",
    "reqd": 1,
    "in_list_view": 1,
-   "columns": 2
+   "columns": 1
   },
   {
    "fieldname": "item_name",
@@ -28,7 +29,14 @@
    "fetch_from": "item_code.item_name",
    "read_only": 1,
    "in_list_view": 1,
-   "columns": 3
+   "columns": 2
+  },
+  {
+   "fieldname": "descripcion",
+   "fieldtype": "Small Text",
+   "label": "Detalle",
+   "in_list_view": 1,
+   "columns": 2
   },
   {
    "fieldname": "qty",
@@ -46,7 +54,6 @@
    "options": "UOM",
    "fetch_from": "item_code.stock_uom",
    "read_only": 1,
-   "in_list_view": 1,
    "columns": 1
   },
   {
@@ -66,7 +73,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-04 14:00:00.000000",
+ "modified": "2026-10-04 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Concepto Orden Taller",

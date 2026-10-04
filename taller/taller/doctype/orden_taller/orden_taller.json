@@ -33,6 +33,11 @@
   "placas",
   "vin",
   "descripcion_danos",
+  "sec_valuacion",
+  "valuacion",
+  "valuacion_aprobada",
+  "col_valuacion",
+  "valuacion_total",
   "sec_conceptos",
   "conceptos",
   "subtotal",
@@ -277,6 +282,42 @@
    "fieldname": "descripcion_danos",
    "fieldtype": "Text",
    "label": "Descripción de daños"
+  },
+  {
+   "fieldname": "sec_valuacion",
+   "fieldtype": "Section Break",
+   "label": "Valuación"
+  },
+  {
+   "fieldname": "valuacion",
+   "fieldtype": "Link",
+   "label": "Valuación",
+   "options": "Valuacion Taller",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "valuacion_aprobada",
+   "fieldtype": "Check",
+   "label": "Valuación aprobada",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1,
+   "description": "Se marca al enviar la valuación; es necesaria para completar Recepción."
+  },
+  {
+   "fieldname": "col_valuacion",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "valuacion_total",
+   "fieldtype": "Currency",
+   "label": "Total de la valuación (con IVA)",
+   "fetch_from": "valuacion.total",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
   },
   {
    "fieldname": "sec_conceptos",
@@ -617,7 +658,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-04 18:00:00.000000",
+ "modified": "2026-10-04 20:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Orden Taller",

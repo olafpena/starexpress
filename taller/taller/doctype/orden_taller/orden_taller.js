@@ -96,6 +96,16 @@ frappe.ui.form.on("Orden Taller", {
 		if (doc.orden_venta_deducible) {
 			frm.add_custom_button(__("Cobro deducible"), () => crear_pago(frm, 1), crear);
 		}
+		if (doc.valuacion) {
+			frm.add_custom_button(__("Valuación"), () => frappe.set_route("Form", "Valuacion Taller", doc.valuacion), __("Ver"));
+		}
+		if (!doc.valuacion_aprobada && doc.docstatus === 0) {
+			frm.add_custom_button(
+				__("Valuación"),
+				() => frappe.new_doc("Valuacion Taller", { orden_taller: doc.name }),
+				crear
+			);
+		}
 		if (doc.proyecto) {
 			frm.add_custom_button(__("Consumo de materiales"), () => abrir_nuevo(frm, "taller.erp.costeo.crear_consumo"), crear);
 			frm.add_custom_button(__("Proyecto"), () => frappe.set_route("Form", "Project", doc.proyecto), __("Ver"));

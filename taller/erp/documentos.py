@@ -185,6 +185,8 @@ def _agregar_conceptos(destino, doc, entrega=None):
     almacen = frappe.db.get_single_value("Stock Settings", "default_warehouse")
     for c in doc.conceptos:
         fila = {"item_code": c.item_code, "qty": c.qty, "rate": c.rate}
+        if c.get("descripcion"):
+            fila["description"] = c.descripcion
         if entrega:
             fila["delivery_date"] = entrega
             if frappe.get_cached_value("Item", c.item_code, "is_stock_item"):

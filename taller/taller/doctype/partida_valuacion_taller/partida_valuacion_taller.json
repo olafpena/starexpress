@@ -1,0 +1,112 @@
+{
+ "actions": [],
+ "creation": "2026-10-04 20:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tipo",
+  "referencia",
+  "descripcion",
+  "cantidad",
+  "precio_unitario",
+  "descuento",
+  "importe",
+  "col_1",
+  "numero_pieza",
+  "ut",
+  "item_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "tipo",
+   "fieldtype": "Select",
+   "label": "Tipo",
+   "options": "Refacción\nMano de obra hojalatería\nMano de obra pintura\nMaterial de pintura\nMaterial de reparación\nOtro",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "referencia",
+   "fieldtype": "Data",
+   "label": "Referencia",
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Referencia, operación o Pos. B.D. de Audatex."
+  },
+  {
+   "fieldname": "descripcion",
+   "fieldtype": "Data",
+   "label": "Descripción",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "cantidad",
+   "fieldtype": "Float",
+   "label": "Cantidad / horas",
+   "default": "1",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "En mano de obra son horas (UT ÷ UT por hora)."
+  },
+  {
+   "fieldname": "precio_unitario",
+   "fieldtype": "Currency",
+   "label": "Precio unitario",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "descuento",
+   "fieldtype": "Percent",
+   "label": "Dcto %",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "importe",
+   "fieldtype": "Currency",
+   "label": "Importe",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "col_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "numero_pieza",
+   "fieldtype": "Data",
+   "label": "Número de pieza"
+  },
+  {
+   "fieldname": "ut",
+   "fieldtype": "Float",
+   "label": "UT",
+   "description": "Unidades de trabajo de Audatex."
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Artículo",
+   "options": "Item",
+   "description": "Se llena solo según el tipo al pasar la valuación a la orden."
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-04 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Partida Valuacion Taller",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "permissions": [],
+ "istable": 1,
+ "editable_grid": 1
+}
