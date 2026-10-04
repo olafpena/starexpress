@@ -143,10 +143,13 @@ def configurar(company="StarExpress"):
     empresa.round_off_cost_center = empresa.round_off_cost_center or empresa.cost_center
     empresa.save(ignore_permissions=True)
 
-    frappe.db.set_default("company", company)
-    frappe.db.set_single_value("Global Defaults", "default_company", company)
-    # CFDI usa totales con centavos: sin redondeo al peso
-    frappe.db.set_single_value("Global Defaults", "disable_rounded_total", 1)
+    # Se guarda como documento (no set_single_value): al guardar, ERPNext aplica la
+    # compañía por defecto y el "sin redondeo" como valor predeterminado de cotizaciones,
+    # órdenes y facturas. CFDI usa totales con centavos: sin redondeo al peso.
+    globales = frappe.get_single("Global Defaults")
+    globales.default_company = company
+    globales.disable_rounded_total = 1
+    globales.save(ignore_permissions=True)
     frappe.db.set_single_value("Stock Settings", "default_warehouse", almacen)
 
     for forma, nombre in FORMAS_PAGO.items():

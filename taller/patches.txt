@@ -9,3 +9,4 @@ taller.patches.v0_6.proyecto_sin_cliente
 taller.patches.v0_7.valuacion
 taller.patches.v0_8.tipo_de_orden
 taller.patches.v0_9.flujo_mecanica
+taller.patches.v0_10.sin_redondeo_al_peso

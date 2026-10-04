@@ -157,6 +157,8 @@ def configuracion_del_workflow():
     verifica(not distintas, f"el workflow del sitio no coincide con el generador: {distintas[:3]}")
     recoleccion = [t.condition for t in wf.transitions if t.state == conf.ESTADO_INICIAL and "recoleccion" in (t.condition or "")]
     verifica(len(recoleccion) == 4, f"se perdieron las condiciones de recolección ({len(recoleccion)} de 4)")
+    redondeo = {dt: frappe.new_doc(dt).disable_rounded_total for dt in ("Quotation", "Sales Order", "Sales Invoice")}
+    verifica(all(redondeo.values()), f"los documentos de venta deben nacer sin redondeo al peso: {redondeo}")
     sin_tipo = frappe.get_all("Orden Taller", filters={"tipo_orden": ["in", ["", None]]}, pluck="name")
     verifica(not sin_tipo, f"órdenes sin tipo de orden: {sin_tipo}")
 
