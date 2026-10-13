@@ -26,6 +26,7 @@ frappe.query_reports["Rentabilidad Orden Taller"] = {
 			fieldtype: "Select",
 			options: "\nAgencia\nParticular\nAseguradora",
 		},
+		{ fieldname: "estatus", label: __("Estatus"), fieldtype: "Link", options: "Estatus Orden Taller" },
 		{ fieldname: "cliente", label: __("Cliente"), fieldtype: "Link", options: "Customer" },
 		{ fieldname: "solo_facturadas", label: __("Solo facturadas"), fieldtype: "Check" },
 	],

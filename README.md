@@ -46,6 +46,21 @@ La valuación (Audatex o captura manual) es de Hojalatería y Pintura. En Mecán
 Cotización, orden de venta, factura, cobro, consumo de materiales, timesheets y costeo funcionan
 igual en los dos tipos. Las reglas tienen un campo *Tipo de orden* para limitar su alcance.
 
+## Estatus de la orden
+
+Cada orden tiene un **Estatus** del catálogo **Estatus Orden Taller**: Activo (verde),
+Inactivo (gris), Cancelado (rojo) y Terminado (azul). Los cuatro son de sistema: no se pueden
+borrar. Se pueden agregar más estatus con su color.
+
+- Toda orden nace **Activa**.
+- El workflow lo actualiza al **Cancelar** (Cancelado), al completar el **último paso**
+  (Terminado) y al **Reactivar** (Activo). Fuera de esas transiciones se respeta el estatus
+  capturado a mano.
+- Se cambia desde el formulario (también en órdenes terminadas) o en bloque desde la lista
+  (*Acciones → Editar*). La lista lo muestra con su color y lo tiene en la barra de filtros;
+  el reporte de rentabilidad también lo filtra.
+- Cuando no es Activo, el encabezado del formulario muestra el estatus con su color.
+
 ## Pasos y estados
 
 Cada paso entra **En Proceso** y sale **Completado** o **Anulado** (paso omitido); desde

@@ -11,6 +11,7 @@ from taller.erp.costeo import (
 )
 from taller.erp.documentos import calcular_conceptos, calcular_montos
 from taller.flujo.configuracion import CAMPO_TIPO_ORDEN, ESTADO_INICIAL
+from taller.flujo.estatus import sincronizar_estatus
 from taller.flujo.pasos import sincronizar_pasos
 from taller.flujo.reglas import validar_reglas_transicion
 from taller.vehiculo.vin import revisar_vin
@@ -26,6 +27,7 @@ class OrdenTaller(Document):
         calcular_costeo(self)
         validar_reglas_transicion(self)
         sincronizar_pasos(self)
+        sincronizar_estatus(self)
 
     def validar_cambio_tipo_orden(self):
         anterior = self.get_doc_before_save()

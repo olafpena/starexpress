@@ -11,6 +11,7 @@
   "paso_actual",
   "workflow_state",
   "col_general",
+  "estatus",
   "fecha_ingreso",
   "company",
   "requiere_recoleccion",
@@ -146,6 +147,20 @@
   {
    "fieldname": "col_general",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "estatus",
+   "fieldtype": "Link",
+   "label": "Estatus",
+   "options": "Estatus Orden Taller",
+   "default": "Activo",
+   "reqd": 1,
+   "allow_on_submit": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "bold": 1,
+   "search_index": 1,
+   "description": "Se actualiza solo al cancelar, terminar o reactivar la orden; también se puede cambiar a mano."
   },
   {
    "fieldname": "fecha_ingreso",
@@ -699,7 +714,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-05 14:10:00.000000",
+ "modified": "2026-10-13 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Orden Taller",

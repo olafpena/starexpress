@@ -252,6 +252,7 @@ def mecanica_flujo_completo_con_contabilidad():
     o.reload()
     o = avanza(o, "Completar", "Enviar a Facturación", "Completar")
     verifica(o.workflow_state == "Facturación - Completado" and o.docstatus == 1, f"final {o.workflow_state}")
+    verifica(o.estatus == conf.ESTATUS_TERMINADO, f"estatus al terminar Mecánica: {o.estatus}")
     verifica(frappe.db.get_value("Project", o.proyecto, "status") == "Completed", "proyecto sin cerrar")
     verifica(flt(o.costo_mano_obra) >= 450 and flt(o.costo_materiales) == 200,
              f"costeo: mano de obra {o.costo_mano_obra}, materiales {o.costo_materiales}")
@@ -345,6 +346,7 @@ def flujo_completo_particular_con_contabilidad():
                "Enviar a Control de calidad", "Completar", "Enviar a Lavado", "Completar", "Enviar a Entrega",
                "Completar", "Enviar a Cobro", "Completar", "Enviar a Facturación", "Completar")
     verifica(o.workflow_state == "Facturación - Completado" and o.docstatus == 1, f"final {o.workflow_state} {o.docstatus}")
+    verifica(o.estatus == conf.ESTATUS_TERMINADO, f"estatus al terminar: {o.estatus}")
     estados = {p.paso: p.estado for p in o.pasos}
     verifica(estados["Recolección"] == "Anulado" and estados["Preparación"] == "Anulado"
              and estados["Pintura"] == "Completado", f"pasos {estados}")
@@ -360,7 +362,9 @@ def cancelar_y_reactivar_hyp():
     verifica(o.workflow_state == "Recolección - En Proceso", o.workflow_state)
     o = avanza(o, "Cancelar")
     verifica(o.pasos[0].estado == "Anulado", "Cancelar debe anular el paso en curso")
+    verifica(o.estatus == conf.ESTATUS_CANCELADO, f"estatus al cancelar: {o.estatus}")
     o = avanza(o, "Reactivar")
+    verifica(o.estatus == conf.ESTATUS_ACTIVO, f"estatus al reactivar: {o.estatus}")
     verifica(o.workflow_state == conf.ESTADO_INICIAL and not any(p.estado for p in o.pasos), "Reactivar no limpió los pasos")
 
 
@@ -434,6 +438,58 @@ def valuacion_manual_y_candados():
     bloquea(lambda: frappe.get_doc({"doctype": "Valuacion Taller", "orden_taller": o.name, "origen": "Captura manual",
                                     "partidas": [{"tipo": "Otro", "descripcion": "x", "cantidad": 1,
                                                   "precio_unitario": 1}]}).insert(), "ya tiene la valuación")
+
+
+@caso
+def estatus_catalogo_y_valor_inicial():
+    catalogo = {e.name: e for e in frappe.get_all(conf.DOCTYPE_ESTATUS, fields=["name", "color", "sistema"])}
+    for nombre, _color, _descripcion in conf.CATALOGO_ESTATUS:
+        verifica(nombre in catalogo and catalogo[nombre].sistema, f"falta el estatus de sistema {nombre}")
+    bloquea(lambda: frappe.delete_doc(conf.DOCTYPE_ESTATUS, conf.ESTATUS_ACTIVO), "no se puede borrar")
+    sin_estatus = frappe.get_all(conf.DOCTYPE, filters={conf.CAMPO_ESTATUS: ["in", ["", None]]}, pluck="name")
+    verifica(not sin_estatus, f"órdenes sin estatus: {sin_estatus}")
+    for tipo in (HYP, MECANICA):
+        verifica(orden(tipo_orden=tipo).estatus == conf.ESTATUS_ACTIVO, f"una orden nueva de {tipo} debe nacer Activa")
+    campo = frappe.get_meta(conf.DOCTYPE).get_field(conf.CAMPO_ESTATUS)
+    verifica(campo.in_standard_filter and campo.in_list_view and campo.allow_on_submit,
+             "el estatus debe estar en filtros y lista, y ser editable en órdenes terminadas")
+
+
+@caso
+def estatus_manual_y_filtro():
+    o = orden(placas="REG20")
+    o.estatus = conf.ESTATUS_INACTIVO
+    o.save()
+    o = avanza(o, "Enviar a Recepción")
+    verifica(o.estatus == conf.ESTATUS_INACTIVO, "avanzar un paso no debe cambiar un estatus capturado a mano")
+    visibles = frappe.get_list(conf.DOCTYPE, filters={conf.CAMPO_ESTATUS: conf.ESTATUS_INACTIVO}, pluck="name")
+    verifica(o.name in visibles, "el filtro por estatus de la lista no encuentra la orden")
+    from taller.taller.report.rentabilidad_orden_taller.rentabilidad_orden_taller import execute
+    _, filas, _, _ = execute({"estatus": conf.ESTATUS_INACTIVO})
+    verifica(filas and all(f.estatus == conf.ESTATUS_INACTIVO for f in filas), "el filtro de estatus del reporte no funciona")
+    bloquea(lambda: frappe.get_doc(conf.DOCTYPE, o.name).update({"estatus": "No existe"}).save(), "No existe")
+
+
+@caso
+def estatus_en_orden_terminada():
+    o = orden(tipo_orden=MECANICA, vin=VIN_TOYOTA, conceptos=[{"item_code": "SRV-LAV", "qty": 1}],
+              diagnostico="Revisión", hallazgo_adicional="", checklist_calidad_ok=1, recibido_por="Cliente",
+              fecha_entrega=now_datetime())
+    enviar("Quotation", documentos.crear_cotizacion(o.name)[0])
+    enviar("Sales Order", documentos.crear_ordenes_venta(o.name)[0])
+    enviar("Sales Invoice", documentos.crear_facturas(o.name)[0])
+    pagar(o)
+    o.reload()
+    o = avanza(o, "Enviar a Recepción", "Completar", "Enviar a Diagnóstico", "Completar", "Enviar a Cotización",
+               "Completar", "Enviar a Autorización del cliente", "Completar", "Enviar a Refacciones", "Completar",
+               "Enviar a Reparación", "Completar", "Enviar a Hallazgo adicional", "Anular",
+               "Enviar a Control de calidad y ruta", "Completar", "Enviar a Lavado", "Completar", "Enviar a Entrega",
+               "Completar", "Enviar a Cobro", "Completar", "Enviar a Facturación", "Completar")
+    verifica(o.docstatus == 1 and o.estatus == conf.ESTATUS_TERMINADO, f"terminada: {o.docstatus} {o.estatus}")
+    o.estatus = conf.ESTATUS_INACTIVO
+    o.save()  # actualización después de enviar (allow_on_submit)
+    verifica(frappe.db.get_value(conf.DOCTYPE, o.name, conf.CAMPO_ESTATUS) == conf.ESTATUS_INACTIVO,
+             "no se pudo cambiar el estatus de una orden terminada")
 
 
 def valuacion_audatex(pdf):

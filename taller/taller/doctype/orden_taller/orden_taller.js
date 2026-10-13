@@ -20,7 +20,10 @@ frappe.ui.form.on("Orden Taller", {
 		frm.trigger("botones_erpnext");
 		frm.set_df_property("conceptos", "read_only", frm.doc.orden_venta ? 1 : 0);
 		frm.set_df_property("cliente", "label", frm.doc.tipo_flujo === "Agencia" ? __("Agencia (cliente)") : __("Cliente"));
-		if (frm.doc.tipo_orden === "Mecánica") {
+		if (frm.doc.estatus && frm.doc.estatus !== "Activo") {
+			// Inactivo, Cancelado, Terminado (u otro del catálogo) se ve en el encabezado con su color
+			color_estatus(frm.doc.estatus).then((color) => frm.page.set_indicator(__(frm.doc.estatus), color));
+		} else if (frm.doc.tipo_orden === "Mecánica") {
 			frm.page.set_indicator(
 				`${__("Mecánica")} · ${frm.doc.tipo_flujo || ""} · ${frm.doc.paso_actual || __("Nueva")}`,
 				"orange"
@@ -38,6 +41,9 @@ frappe.ui.form.on("Orden Taller", {
 		frm.trigger("aviso_guardar");
 	},
 	tipo_flujo(frm) {
+		frm.trigger("refresh");
+	},
+	estatus(frm) {
 		frm.trigger("refresh");
 	},
 	tipo_orden(frm) {
@@ -140,6 +146,16 @@ frappe.ui.form.on("Orden Taller", {
 		}
 	},
 });
+
+const COLORES_ESTATUS = {};
+
+function color_estatus(estatus) {
+	if (COLORES_ESTATUS[estatus]) return Promise.resolve(COLORES_ESTATUS[estatus]);
+	return frappe.db.get_value("Estatus Orden Taller", estatus, "color").then(({ message }) => {
+		COLORES_ESTATUS[estatus] = ((message && message.color) || "gray").toLowerCase();
+		return COLORES_ESTATUS[estatus];
+	});
+}
 
 // Nueva sin guardar, o con tipo de orden / de flujo distinto al guardado
 function falta_guardar_flujo(frm) {

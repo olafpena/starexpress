@@ -20,6 +20,7 @@ def columnas():
         col("fecha_ingreso", "Ingreso", "Date", 95),
         col("tipo_orden", "Tipo de orden", "Data", 150),
         col("tipo_flujo", "Tipo", "Data", 100),
+        col("estatus", "Estatus", "Link", 100, options="Estatus Orden Taller"),
         col("cliente_nombre", "Cliente", "Data", 160),
         col("paso_actual", "Paso", "Data", 120),
         col("ingresos", "Ingresos"),
@@ -35,7 +36,7 @@ def columnas():
 
 def datos(filters):
     condiciones = {"docstatus": ["<", 2]}
-    for campo in ("company", "tipo_orden", "tipo_flujo", "cliente"):
+    for campo in ("company", "tipo_orden", "tipo_flujo", "estatus", "cliente"):
         if filters.get(campo):
             condiciones[campo] = filters.get(campo)
     if filters.get("desde") and filters.get("hasta"):
@@ -44,7 +45,7 @@ def datos(filters):
         condiciones["facturado"] = 1
 
     ordenes = frappe.get_list("Orden Taller", filters=condiciones, order_by="fecha_ingreso desc", fields=[
-        "name as orden", "fecha_ingreso", "tipo_orden", "tipo_flujo", "cliente_nombre", "paso_actual", "ingresos",
+        "name as orden", "fecha_ingreso", "tipo_orden", "tipo_flujo", "estatus", "cliente_nombre", "paso_actual", "ingresos",
         "costo_materiales", "costo_mano_obra", "costo_total", "margen", "margen_porcentaje"])
     if not ordenes:
         return []

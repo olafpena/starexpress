@@ -40,6 +40,7 @@ DOCTYPE = "Orden Taller"
 DOCTYPE_REGLAS = "Regla Transicion Taller"
 DOCTYPE_VEHICULO = "Vehiculo Taller"
 DOCTYPE_VALUACION = "Valuacion Taller"
+DOCTYPE_ESTATUS = "Estatus Orden Taller"
 CAMPO_ESTADO = "workflow_state"
 CAMPO_PASO = "paso_actual"
 CAMPO_PASOS = "pasos"
@@ -52,6 +53,20 @@ TIPOS_ORDEN = [TIPO_ORDEN_FLUJO, TIPO_ORDEN_MECANICA]
 CONDICION_TIPO_ORDEN = f'doc.{CAMPO_TIPO_ORDEN} == "{TIPO_ORDEN_FLUJO}"'
 # Acciones de la orden completa, disponibles para cualquier tipo de orden
 ACCIONES_GENERALES = ("Cancelar", "Reactivar")
+
+# Estatus de la orden (catálogo Estatus Orden Taller). Los de sistema los usa la
+# app: alta de órdenes (Activo) y sincronización con el workflow (taller/flujo/estatus.py).
+CAMPO_ESTATUS = "estatus"
+ESTATUS_ACTIVO = "Activo"
+ESTATUS_INACTIVO = "Inactivo"
+ESTATUS_CANCELADO = "Cancelado"
+ESTATUS_TERMINADO = "Terminado"
+CATALOGO_ESTATUS = [
+    (ESTATUS_ACTIVO, "Green", "Orden en trabajo. Estatus inicial de toda orden."),
+    (ESTATUS_INACTIVO, "Gray", "Orden detenida temporalmente (p. ej. en espera del cliente)."),
+    (ESTATUS_CANCELADO, "Red", "Orden cancelada. Se asigna al cancelar la orden en el workflow."),
+    (ESTATUS_TERMINADO, "Blue", "Orden cerrada. Se asigna al completar el último paso del flujo."),
+]
 
 ROL_SUPERVISOR = "Jefe de Taller"
 ROL_RECEPCION = "Asesor de Servicio"
@@ -527,6 +542,7 @@ def instalar(reconstruir=False):
 
     validar_configuracion()
     crear_campos_personalizados()
+    crear_estatus()
     crear_roles()
     crear_estados_workflow()
     crear_acciones()
@@ -537,6 +553,18 @@ def instalar(reconstruir=False):
     frappe.clear_cache(doctype=DOCTYPE)
     print(f"Workflow '{NOMBRE_WORKFLOW}' listo: "
           f"{len(construir_estados())} estados, {len(construir_transiciones())} transiciones.")
+
+
+def crear_estatus():
+    """Catálogo de estatus: crea los de sistema que falten (no cambia colores editados)."""
+    import frappe
+
+    for nombre, color, descripcion in CATALOGO_ESTATUS:
+        if frappe.db.exists(DOCTYPE_ESTATUS, nombre):
+            frappe.db.set_value(DOCTYPE_ESTATUS, nombre, "sistema", 1)
+            continue
+        frappe.get_doc({"doctype": DOCTYPE_ESTATUS, "estatus": nombre, "color": color,
+                        "descripcion": descripcion, "sistema": 1}).insert(ignore_permissions=True)
 
 
 def crear_roles():
@@ -579,6 +607,13 @@ def asignar_permisos():
     add_permission(DOCTYPE_REGLAS, ROL_SUPERVISOR, 0)
     for ptype in ["read", "write", "create", "delete", "report"]:
         update_permission_property(DOCTYPE_REGLAS, ROL_SUPERVISOR, 0, ptype, 1)
+
+    # Catálogo de estatus: todos lo consultan; el jefe lo administra
+    for rol in roles():
+        add_permission(DOCTYPE_ESTATUS, rol, 0)
+        ptypes = ["read", "write", "create", "report"] if rol == ROL_SUPERVISOR else ["read"]
+        for ptype in ptypes:
+            update_permission_property(DOCTYPE_ESTATUS, rol, 0, ptype, 1)
 
     # Valuación: la carga y aprueba recepción; el jefe además cancela y modifica
     for rol in roles():
