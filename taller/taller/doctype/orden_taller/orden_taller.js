@@ -31,7 +31,11 @@ frappe.ui.form.on("Orden Taller", {
 				COLORES_TIPO[frm.doc.tipo_flujo] || "gray"
 			);
 		}
+		if (!frm.is_dirty()) {
+			frm.taller_tipo_guardado = { tipo_orden: frm.doc.tipo_orden, tipo_flujo: frm.doc.tipo_flujo };
+		}
 		frm.trigger("dibujar_flujo");
+		frm.trigger("aviso_guardar");
 	},
 	tipo_flujo(frm) {
 		frm.trigger("refresh");
@@ -39,13 +43,18 @@ frappe.ui.form.on("Orden Taller", {
 	tipo_orden(frm) {
 		frm.trigger("refresh");
 	},
+	// El flujo de pasos lo genera el servidor al guardar, según el tipo de orden y de flujo
+	aviso_guardar(frm) {
+		frm.set_intro("");
+		if (frm.doc.docstatus === 0 && falta_guardar_flujo(frm)) {
+			frm.set_intro(mensaje_guardar(frm), "blue");
+		}
+	},
 	dibujar_flujo(frm) {
 		const $wrapper = frm.get_field("flujo_html").$wrapper;
 		const pasos = frm.doc.pasos || [];
-		if (!pasos.length) {
-			$wrapper.html(
-				`<div class="text-muted small">${__("Elige el tipo de flujo y guarda la orden para ver sus pasos.")}</div>`
-			);
+		if (falta_guardar_flujo(frm) || !pasos.length) {
+			$wrapper.html(`<div class="text-muted small">${frappe.utils.escape_html(mensaje_guardar(frm))}</div>`);
 			return;
 		}
 
@@ -131,6 +140,22 @@ frappe.ui.form.on("Orden Taller", {
 		}
 	},
 });
+
+// Nueva sin guardar, o con tipo de orden / de flujo distinto al guardado
+function falta_guardar_flujo(frm) {
+	const guardado = frm.taller_tipo_guardado;
+	return (
+		frm.is_new() ||
+		(!!guardado && (guardado.tipo_orden !== frm.doc.tipo_orden || guardado.tipo_flujo !== frm.doc.tipo_flujo))
+	);
+}
+
+function mensaje_guardar(frm) {
+	const tipo = frm.doc.tipo_orden || __("Hojalatería y Pintura");
+	return frm.doc.tipo_flujo
+		? __("Guarda la orden para que aparezca el flujo de {0}.", [tipo])
+		: __("Elige el tipo de flujo y guarda la orden para que aparezca el flujo de {0}.", [tipo]);
+}
 
 function crear_documentos(frm, metodo) {
 	const continuar = () =>
