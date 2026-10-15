@@ -19,6 +19,10 @@ frappe.ui.form.on("Orden Taller", {
 	refresh(frm) {
 		frm.trigger("botones_erpnext");
 		frm.set_df_property("conceptos", "read_only", frm.doc.orden_venta ? 1 : 0);
+		// La tabla de pasos la mantiene el servidor según el flujo (cannot_add_rows en el
+		// JSON no aplica: DocField de Frappe v16 no tiene esas propiedades)
+		frm.set_df_property("pasos", "cannot_add_rows", true);
+		frm.set_df_property("pasos", "cannot_delete_rows", true);
 		frm.set_df_property("cliente", "label", frm.doc.tipo_flujo === "Agencia" ? __("Agencia (cliente)") : __("Cliente"));
 		if (frm.doc.estatus && frm.doc.estatus !== "Activo") {
 			// Inactivo, Cancelado, Terminado (u otro del catálogo) se ve en el encabezado con su color

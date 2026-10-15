@@ -146,6 +146,9 @@ def hasta_cobro(o):
 def configuracion_del_workflow():
     wf = frappe.get_doc("Workflow", conf.NOMBRE_WORKFLOW)
     verifica(wf.is_active and wf.document_type == conf.DOCTYPE, "el workflow no está activo en Orden Taller")
+    # Con developer_mode el DocType se edita en el Desk: el campo del workflow debe seguir ahí
+    verifica(frappe.get_meta(conf.DOCTYPE).get_field(conf.CAMPO_ESTADO),
+             f"falta el campo {conf.CAMPO_ESTADO} en {conf.DOCTYPE}: el workflow no puede asignar estados")
     for t in wf.transitions:
         if t.action in conf.ACCIONES_GENERALES:
             verifica("tipo_orden" not in (t.condition or ""), f"{t.action} no debe depender del tipo de orden")
