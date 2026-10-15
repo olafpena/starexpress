@@ -17,7 +17,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, get_datetime, getdate
 
-from taller.erp.configuracion_empresa import CENTRO_COSTO_TALLER, actividad
+from taller.erp.configuracion_empresa import CENTRO_COSTO_TALLER, actividad, almacen_predeterminado
 
 DOCTYPE = "Orden Taller"
 MINIMO_HORAS = 1 / 60  # tramos de menos de un minuto no generan Timesheet
@@ -141,7 +141,7 @@ def crear_consumo(orden):
     se.purpose = "Material Issue"
     se.company = doc.company
     se.project = doc.proyecto
-    se.from_warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+    se.from_warehouse = almacen_predeterminado(doc.company)
     se.remarks = _("Consumo de materiales de la orden {0}").format(doc.name)
     return se
 

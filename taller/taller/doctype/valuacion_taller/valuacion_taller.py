@@ -22,6 +22,7 @@ from frappe.utils import flt
 
 from taller.erp.configuracion_empresa import ARTICULO_POR_TIPO
 from taller.erp.documentos import tasa_impuestos
+from taller.flujo.configuracion import TIPOS_CON_VALUACION
 from taller.valuacion import audatex
 from taller.vehiculo.vin import revisar_vin
 
@@ -42,7 +43,7 @@ CAMPOS_VEHICULO = ["marca", "modelo", "anio", "color", "placas", "vin"]
 class ValuacionTaller(Document):
     def validate(self):
         tipo_orden = frappe.db.get_value(DOCTYPE_ORDEN, self.orden_taller, "tipo_orden")
-        if tipo_orden and tipo_orden != "Hojalatería y Pintura":
+        if tipo_orden and tipo_orden not in TIPOS_CON_VALUACION:
             frappe.throw(_("La valuación es parte del flujo de Hojalatería y Pintura; la orden {0} es de {1}.")
                          .format(self.orden_taller, tipo_orden))
         # El VIN de Audatex lo captura la aseguradora o agencia: solo se advierte

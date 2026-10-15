@@ -8,14 +8,13 @@
   "sec_general",
   "tipo_orden",
   "tipo_flujo",
+  "estatus",
   "paso_actual",
   "workflow_state",
-  "estatus",
   "company",
-  "col_general",
-  "fecha_ingreso",
   "requiere_recoleccion",
   "direccion_recoleccion",
+  "fecha_ingreso",
   "sec_cliente",
   "cliente",
   "cliente_nombre",
@@ -35,6 +34,13 @@
   "placas",
   "vin",
   "descripcion_danos",
+  "sec_inventario",
+  "inventario",
+  "col_inventario",
+  "kilometraje",
+  "sec_fotos",
+  "fotos_html",
+  "fotos",
   "sec_mecanica",
   "diagnostico",
   "col_mecanica",
@@ -82,6 +88,7 @@
   "col_calidad",
   "fecha_entrega",
   "recibido_por",
+  "firma_entrega",
   "sec_factura",
   "folio_factura",
   "col_factura",
@@ -105,14 +112,14 @@
   },
   {
    "bold": 1,
-   "default": "Hojalater\u00eda y Pintura",
-   "description": "Define el flujo de pasos; solo se puede cambiar mientras la orden est\u00e1 en Nueva.",
+   "default": "Hojalatería y Pintura",
+   "description": "Define el flujo de pasos; solo se puede cambiar mientras la orden está en Nueva.",
    "fieldname": "tipo_orden",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Tipo de orden",
-   "options": "Hojalater\u00eda y Pintura\nMec\u00e1nica",
+   "options": "Hojalatería y Pintura\nMecánica\nAmbos",
    "reqd": 1
   },
   {
@@ -126,33 +133,9 @@
   },
   {
    "allow_on_submit": 1,
-   "fieldname": "paso_actual",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Paso actual",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "allow_on_submit": 1,
-   "fieldname": "workflow_state",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "in_standard_filter": 1,
-   "label": "Estado",
-   "no_copy": 1,
-   "options": "Workflow State"
-  },
-  {
-   "fieldname": "col_general",
-   "fieldtype": "Column Break"
-  },
-  {
-   "allow_on_submit": 1,
    "bold": 1,
    "default": "Activo",
-   "description": "Se actualiza solo al cancelar, terminar o reactivar la orden; tambi\u00e9n se puede cambiar a mano.",
+   "description": "Se actualiza solo al cancelar, terminar o reactivar la orden; también se puede cambiar a mano.",
    "fieldname": "estatus",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -171,22 +154,9 @@
   {
    "fieldname": "company",
    "fieldtype": "Link",
-   "label": "Compa\u00f1\u00eda",
+   "label": "Compañía",
    "options": "Company",
    "remember_last_selected_value": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "requiere_recoleccion",
-   "fieldtype": "Check",
-   "label": "Requiere recolecci\u00f3n"
-  },
-  {
-   "depends_on": "eval:doc.requiere_recoleccion",
-   "fieldname": "direccion_recoleccion",
-   "fieldtype": "Small Text",
-   "label": "Direcci\u00f3n de recolecci\u00f3n",
-   "mandatory_depends_on": "eval:doc.requiere_recoleccion"
   },
   {
    "fieldname": "sec_cliente",
@@ -215,7 +185,7 @@
    "fetch_if_empty": 1,
    "fieldname": "telefono",
    "fieldtype": "Data",
-   "label": "Tel\u00e9fono",
+   "label": "Teléfono",
    "options": "Phone"
   },
   {
@@ -251,13 +221,13 @@
   {
    "fieldname": "sec_vehiculo",
    "fieldtype": "Section Break",
-   "label": "Veh\u00edculo"
+   "label": "Vehículo"
   },
   {
    "fieldname": "vehiculo",
    "fieldtype": "Link",
    "in_standard_filter": 1,
-   "label": "Veh\u00edculo",
+   "label": "Vehículo",
    "options": "Vehiculo Taller"
   },
   {
@@ -279,7 +249,7 @@
    "fetch_if_empty": 1,
    "fieldname": "anio",
    "fieldtype": "Int",
-   "label": "A\u00f1o"
+   "label": "Año"
   },
   {
    "fieldname": "col_vehiculo",
@@ -306,46 +276,46 @@
    "fetch_if_empty": 1,
    "fieldname": "vin",
    "fieldtype": "Data",
-   "label": "VIN / N\u00famero de serie"
+   "label": "VIN / Número de serie"
   },
   {
    "fieldname": "descripcion_danos",
    "fieldtype": "Text",
-   "label": "Descripci\u00f3n de da\u00f1os"
+   "label": "Descripción de daños"
   },
   {
-   "depends_on": "eval:doc.tipo_orden==\"Mec\u00e1nica\"",
+   "depends_on": "eval:[\"Mecánica\",\"Ambos\"].includes(doc.tipo_orden)",
    "fieldname": "sec_mecanica",
    "fieldtype": "Section Break",
-   "label": "Mec\u00e1nica"
+   "label": "Mecánica"
   },
   {
-   "description": "Necesario para completar el paso Diagn\u00f3stico.",
+   "description": "Necesario para completar el paso Diagnóstico.",
    "fieldname": "diagnostico",
    "fieldtype": "Text",
-   "label": "Diagn\u00f3stico"
+   "label": "Diagnóstico"
   },
   {
    "fieldname": "col_mecanica",
    "fieldtype": "Column Break"
   },
   {
-   "description": "Si hay trabajo extra, agr\u00e9galo a la orden de venta con Actualizar art\u00edculos; si no hubo hallazgo, anula el paso.",
+   "description": "Si hay trabajo extra, agrégalo a la orden de venta con Actualizar artículos; si no hubo hallazgo, anula el paso.",
    "fieldname": "hallazgo_adicional",
    "fieldtype": "Text",
    "label": "Hallazgo adicional"
   },
   {
-   "depends_on": "eval:doc.tipo_orden==\"Hojalater\u00eda y Pintura\"",
+   "depends_on": "eval:[\"Hojalatería y Pintura\",\"Ambos\"].includes(doc.tipo_orden)",
    "fieldname": "sec_valuacion",
    "fieldtype": "Section Break",
-   "label": "Valuaci\u00f3n"
+   "label": "Valuación"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "valuacion",
    "fieldtype": "Link",
-   "label": "Valuaci\u00f3n",
+   "label": "Valuación",
    "no_copy": 1,
    "options": "Valuacion Taller",
    "read_only": 1
@@ -353,10 +323,10 @@
   {
    "allow_on_submit": 1,
    "default": "0",
-   "description": "Se marca al enviar la valuaci\u00f3n; es necesaria para completar Recepci\u00f3n.",
+   "description": "Se marca al enviar la valuación; es necesaria para completar Recepción.",
    "fieldname": "valuacion_aprobada",
    "fieldtype": "Check",
-   "label": "Valuaci\u00f3n aprobada",
+   "label": "Valuación aprobada",
    "no_copy": 1,
    "read_only": 1
   },
@@ -369,7 +339,7 @@
    "fetch_from": "valuacion.total",
    "fieldname": "valuacion_total",
    "fieldtype": "Currency",
-   "label": "Total de la valuaci\u00f3n (con IVA)",
+   "label": "Total de la valuación (con IVA)",
    "no_copy": 1,
    "read_only": 1
   },
@@ -426,12 +396,12 @@
   {
    "fieldname": "numero_siniestro",
    "fieldtype": "Data",
-   "label": "N\u00famero de siniestro"
+   "label": "Número de siniestro"
   },
   {
    "fieldname": "numero_poliza",
    "fieldtype": "Data",
-   "label": "N\u00famero de p\u00f3liza"
+   "label": "Número de póliza"
   },
   {
    "fieldname": "ajustador",
@@ -484,7 +454,7 @@
    "fieldname": "forma_pago",
    "fieldtype": "Select",
    "label": "Forma de pago",
-   "options": "\nEfectivo\nTarjeta\nTransferencia\nCr\u00e9dito"
+   "options": "\nEfectivo\nTarjeta\nTransferencia\nCrédito"
   },
   {
    "fieldname": "col_cobro",
@@ -516,7 +486,8 @@
   {
    "fieldname": "sec_costeo",
    "fieldtype": "Section Break",
-   "label": "Costeo"
+   "label": "Costeo",
+   "permlevel": 1
   },
   {
    "allow_on_submit": 1,
@@ -525,7 +496,8 @@
    "fieldtype": "Currency",
    "label": "Ingresos (sin IVA)",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "permlevel": 1
   },
   {
    "allow_on_submit": 1,
@@ -534,20 +506,23 @@
    "fieldtype": "Currency",
    "label": "Costo de materiales",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "permlevel": 1
   },
   {
    "allow_on_submit": 1,
-   "description": "Timesheets del proyecto (horas reales \u00d7 costo por hora del paso).",
+   "description": "Timesheets del proyecto (horas reales × costo por hora del paso).",
    "fieldname": "costo_mano_obra",
    "fieldtype": "Currency",
    "label": "Costo de mano de obra",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "permlevel": 1
   },
   {
    "fieldname": "col_costeo",
-   "fieldtype": "Column Break"
+   "fieldtype": "Column Break",
+   "permlevel": 1
   },
   {
    "allow_on_submit": 1,
@@ -555,7 +530,8 @@
    "fieldtype": "Currency",
    "label": "Costo total",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "permlevel": 1
   },
   {
    "allow_on_submit": 1,
@@ -564,7 +540,8 @@
    "fieldtype": "Currency",
    "label": "Margen",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "permlevel": 1
   },
   {
    "allow_on_submit": 1,
@@ -572,7 +549,8 @@
    "fieldtype": "Percent",
    "label": "Margen %",
    "no_copy": 1,
-   "read_only": 1
+   "read_only": 1,
+   "permlevel": 1
   },
   {
    "fieldname": "sec_calidad",
@@ -607,7 +585,7 @@
   {
    "fieldname": "sec_factura",
    "fieldtype": "Section Break",
-   "label": "Facturaci\u00f3n"
+   "label": "Facturación"
   },
   {
    "allow_on_submit": 1,
@@ -648,7 +626,7 @@
    "allow_on_submit": 1,
    "fieldname": "cotizacion",
    "fieldtype": "Link",
-   "label": "Cotizaci\u00f3n",
+   "label": "Cotización",
    "no_copy": 1,
    "options": "Quotation",
    "read_only": 1
@@ -713,11 +691,90 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "paso_actual",
+   "fieldtype": "Data",
+   "label": "Paso actual",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "workflow_state",
+   "fieldtype": "Link",
+   "label": "Estado del flujo",
+   "options": "Workflow State",
+   "hidden": 1,
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "no_copy": 1
+  },
+  {
+   "fieldname": "requiere_recoleccion",
+   "fieldtype": "Check",
+   "label": "Requiere recolección",
+   "description": "La unidad se recoge en la agencia o con el cliente: el inventario se levanta en Recolección."
+  },
+  {
+   "fieldname": "direccion_recoleccion",
+   "fieldtype": "Small Text",
+   "label": "Dirección de recolección",
+   "depends_on": "eval:doc.requiere_recoleccion"
+  },
+  {
+   "fieldname": "sec_inventario",
+   "fieldtype": "Section Break",
+   "label": "Inventario de la unidad"
+  },
+  {
+   "fieldname": "inventario",
+   "fieldtype": "Link",
+   "label": "Inventario",
+   "options": "Inventario",
+   "read_only": 1,
+   "no_copy": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "col_inventario",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "kilometraje",
+   "fieldtype": "Int",
+   "label": "Kilometraje al llegar al taller",
+   "description": "Se llena en Recepción; si el inventario se levantó en Recepción, se copia de ahí."
+  },
+  {
+   "fieldname": "sec_fotos",
+   "fieldtype": "Section Break",
+   "label": "Fotos",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "fotos_html",
+   "fieldtype": "HTML",
+   "label": "Visor"
+  },
+  {
+   "fieldname": "fotos",
+   "fieldtype": "Table",
+   "label": "Fotos",
+   "options": "Foto Orden Taller",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "firma_entrega",
+   "fieldtype": "Signature",
+   "label": "Firma de quien recibe la unidad"
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 14:29:40.156017",
+ "modified": "2026-10-15 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Orden Taller",
@@ -737,6 +794,12 @@
    "role": "System Manager",
    "share": 1,
    "submit": 1,
+   "write": 1
+  },
+  {
+   "role": "System Manager",
+   "permlevel": 1,
+   "read": 1,
    "write": 1
   }
  ],

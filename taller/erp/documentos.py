@@ -18,7 +18,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate, nowdate
 
-from taller.erp.configuracion_empresa import ARTICULO_DEDUCIBLE
+from taller.erp.configuracion_empresa import ARTICULO_DEDUCIBLE, almacen_predeterminado
 
 DOCTYPE = "Orden Taller"
 CAMPO_ORDEN = "orden_taller"
@@ -182,7 +182,7 @@ def _requerir(valor, campo):
 def _agregar_conceptos(destino, doc, entrega=None):
     if not doc.conceptos:
         frappe.throw(_("Agrega al menos un concepto a la orden."))
-    almacen = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+    almacen = almacen_predeterminado(doc.company)
     for c in doc.conceptos:
         fila = {"item_code": c.item_code, "qty": c.qty, "rate": c.rate}
         if c.get("descripcion"):
@@ -243,7 +243,7 @@ def crear_ordenes_venta(orden):
             for item in so.items:
                 item.delivery_date = entrega
                 if frappe.get_cached_value("Item", item.item_code, "is_stock_item"):
-                    item.warehouse = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+                    item.warehouse = almacen_predeterminado(doc.company)
         else:
             so = frappe.new_doc("Sales Order")
             so.customer = cliente

@@ -1,0 +1,96 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "imagen",
+  "miniatura",
+  "etapa",
+  "angulo",
+  "zona",
+  "comentario",
+  "paso",
+  "tomada_por",
+  "fecha"
+ ],
+ "fields": [
+  {
+   "fieldname": "imagen",
+   "fieldtype": "Attach Image",
+   "label": "Foto",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "miniatura",
+   "fieldtype": "Data",
+   "label": "Miniatura",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "etapa",
+   "fieldtype": "Select",
+   "label": "Etapa",
+   "options": "\nRecolección\nRecepción\nProceso\nCalidad\nEntrega",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "angulo",
+   "fieldtype": "Select",
+   "label": "Ángulo",
+   "options": "\nFrente completo\nTrasera completa\nCostado izquierdo\nCostado derecho\nEsquinas en diagonal\nTablero encendido\nVIN\nPlacas\nInterior\nCajuela con refacción y herramienta\nDaño de cerca",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "zona",
+   "fieldtype": "Link",
+   "label": "Zona",
+   "options": "Zona de Carroceria",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "comentario",
+   "fieldtype": "Small Text",
+   "label": "Comentario",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "paso",
+   "fieldtype": "Data",
+   "label": "Paso",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tomada_por",
+   "fieldtype": "Link",
+   "label": "Tomada por",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "fecha",
+   "fieldtype": "Datetime",
+   "label": "Fecha",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-15 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Foto Orden Taller",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

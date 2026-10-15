@@ -6,6 +6,9 @@ const COLORES_ESTADO = {
 };
 
 const METODOS = "taller.erp.documentos";
+// Tipos de orden con sección de Mecánica / con valuación (como en flujo/configuracion.py)
+const TIPOS_CON_MECANICA = ["Mecánica", "Ambos"];
+const TIPOS_CON_VALUACION = ["Hojalatería y Pintura", "Ambos"];
 
 frappe.ui.form.on("Orden Taller", {
 	setup(frm) {
@@ -27,10 +30,10 @@ frappe.ui.form.on("Orden Taller", {
 		if (frm.doc.estatus && frm.doc.estatus !== "Activo") {
 			// Inactivo, Cancelado, Terminado (u otro del catálogo) se ve en el encabezado con su color
 			color_estatus(frm.doc.estatus).then((color) => frm.page.set_indicator(__(frm.doc.estatus), color));
-		} else if (frm.doc.tipo_orden === "Mecánica") {
+		} else if (TIPOS_CON_MECANICA.includes(frm.doc.tipo_orden)) {
 			frm.page.set_indicator(
-				`${__("Mecánica")} · ${frm.doc.tipo_flujo || ""} · ${frm.doc.paso_actual || __("Nueva")}`,
-				"orange"
+				`${__(frm.doc.tipo_orden)} · ${frm.doc.tipo_flujo || ""} · ${frm.doc.paso_actual || __("Nueva")}`,
+				frm.doc.tipo_orden === "Ambos" ? "cyan" : "orange"
 			);
 		} else if (frm.doc.tipo_flujo) {
 			frm.page.set_indicator(
@@ -43,6 +46,7 @@ frappe.ui.form.on("Orden Taller", {
 		}
 		frm.trigger("dibujar_flujo");
 		frm.trigger("aviso_guardar");
+		taller_fotos.pintar(frm);
 	},
 	tipo_flujo(frm) {
 		frm.trigger("refresh");
@@ -126,7 +130,10 @@ frappe.ui.form.on("Orden Taller", {
 		if (doc.valuacion) {
 			frm.add_custom_button(__("Valuación"), () => frappe.set_route("Form", "Valuacion Taller", doc.valuacion), __("Ver"));
 		}
-		if (!doc.valuacion_aprobada && doc.docstatus === 0 && doc.tipo_orden === "Hojalatería y Pintura") {
+		if (doc.inventario) {
+			frm.add_custom_button(__("Inventario"), () => frappe.set_route("Form", "Inventario", doc.inventario), __("Ver"));
+		}
+		if (!doc.valuacion_aprobada && doc.docstatus === 0 && TIPOS_CON_VALUACION.includes(doc.tipo_orden)) {
 			frm.add_custom_button(
 				__("Valuación"),
 				() => frappe.new_doc("Valuacion Taller", { orden_taller: doc.name }),

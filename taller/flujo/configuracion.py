@@ -11,9 +11,10 @@ Este módulo es la ÚNICA fuente de verdad del workflow. Desde aquí se generan:
   * Permisos por rol
   * Reglas de transición de ejemplo (DocType "Regla Transicion Taller")
 
-El workflow es del tipo de orden "Hojalatería y Pintura": todas sus transiciones,
-salvo Cancelar y Reactivar, llevan la condición `doc.tipo_orden == "Hojalatería y
-Pintura"`, así que no aplica a otros tipos de orden (p. ej. Mecánica).
+El workflow cubre los tres tipos de orden (Hojalatería y Pintura, Mecánica y
+Ambos): todas sus transiciones, salvo Cancelar y Reactivar, llevan la condición
+`doc.tipo_orden == "..."` (o `in (...)` si el paso se comparte), así que un tipo de
+orden sin secuencia no hereda pasos.
 
 Frappe solo permite UN workflow activo por DocType, así que los tres tipos
 (Agencia, Particular, Aseguradora) viven en el mismo workflow y se distinguen
@@ -41,6 +42,9 @@ DOCTYPE_REGLAS = "Regla Transicion Taller"
 DOCTYPE_VEHICULO = "Vehiculo Taller"
 DOCTYPE_VALUACION = "Valuacion Taller"
 DOCTYPE_ESTATUS = "Estatus Orden Taller"
+DOCTYPE_INVENTARIO = "Inventario"
+DOCTYPE_ZONA = "Zona de Carroceria"
+DOCTYPE_DANO = "Danio de Carroceria"
 CAMPO_ESTADO = "workflow_state"
 CAMPO_PASO = "paso_actual"
 CAMPO_PASOS = "pasos"
@@ -49,7 +53,18 @@ CAMPO_TIPO_ORDEN = "tipo_orden"
 # Tipos de orden. El workflow y la tabla de pasos son de TIPO_ORDEN_FLUJO.
 TIPO_ORDEN_FLUJO = "Hojalatería y Pintura"
 TIPO_ORDEN_MECANICA = "Mecánica"
-TIPOS_ORDEN = [TIPO_ORDEN_FLUJO, TIPO_ORDEN_MECANICA]
+# Mecánica y luego hojalatería y pintura en una sola orden
+TIPO_ORDEN_AMBOS = "Ambos"
+TIPOS_ORDEN = [TIPO_ORDEN_FLUJO, TIPO_ORDEN_MECANICA, TIPO_ORDEN_AMBOS]
+# Tipos de orden que llevan valuación (Valuacion Taller) y sección de mecánica
+TIPOS_CON_VALUACION = (TIPO_ORDEN_FLUJO, TIPO_ORDEN_AMBOS)
+TIPOS_CON_MECANICA = (TIPO_ORDEN_MECANICA, TIPO_ORDEN_AMBOS)
+# Reglas de transición que toma cada tipo de orden, además de las de "Todos"
+TIPOS_DE_REGLAS = {
+    TIPO_ORDEN_FLUJO: [TIPO_ORDEN_FLUJO],
+    TIPO_ORDEN_MECANICA: [TIPO_ORDEN_MECANICA],
+    TIPO_ORDEN_AMBOS: [TIPO_ORDEN_AMBOS, TIPO_ORDEN_FLUJO, TIPO_ORDEN_MECANICA],
+}
 CONDICION_TIPO_ORDEN = f'doc.{CAMPO_TIPO_ORDEN} == "{TIPO_ORDEN_FLUJO}"'
 # Acciones de la orden completa, disponibles para cualquier tipo de orden
 ACCIONES_GENERALES = ("Cancelar", "Reactivar")
@@ -102,6 +117,11 @@ SECUENCIA_HYP = ["Recolección", "Recepción", "Carrocería", "Preparación", "P
 SECUENCIA_MECANICA = ["Recepción", "Diagnóstico", "Cotización", "Autorización del cliente",
                       "Refacciones", "Reparación", "Hallazgo adicional", "Control de calidad y ruta",
                       "Lavado", "Entrega", "Cobro", "Facturación"]
+# Ambos: primero la mecánica y después la carrocería; un solo control de calidad y ruta
+SECUENCIA_AMBOS = ["Recolección", "Recepción", "Diagnóstico", "Cotización", "Autorización del cliente",
+                   "Refacciones", "Reparación", "Hallazgo adicional", "Carrocería", "Preparación",
+                   "Pintura", "Armado", "Pulido", "Control de calidad y ruta", "Lavado", "Entrega",
+                   "Cobro", "Facturación"]
 
 # --------------------------------------------------------------------------
 # Secuencia de pasos por tipo de flujo.
@@ -122,6 +142,7 @@ FLUJOS = OrderedDict([
 FLUJOS_POR_ORDEN = OrderedDict([
     (TIPO_ORDEN_FLUJO, FLUJOS),
     (TIPO_ORDEN_MECANICA, OrderedDict((t, list(SECUENCIA_MECANICA)) for t in FLUJOS)),
+    (TIPO_ORDEN_AMBOS, OrderedDict((t, list(SECUENCIA_AMBOS)) for t in FLUJOS)),
 ])
 
 # Horas estimadas por paso; llenan la columna "Hrs est." de la tabla de pasos
@@ -178,7 +199,62 @@ PASOS_RETRABAJO = ["Carrocería", "Preparación", "Pintura", "Armado", "Pulido"]
 RETRABAJO = {
     TIPO_ORDEN_FLUJO: (PASO_CALIDAD, PASOS_RETRABAJO),
     TIPO_ORDEN_MECANICA: ("Control de calidad y ruta", ["Reparación"]),
+    TIPO_ORDEN_AMBOS: ("Control de calidad y ruta", ["Reparación"] + PASOS_RETRABAJO),
 }
+
+# --------------------------------------------------------------------------
+# Inventario de la unidad (DocType Inventario): toda orden tiene uno. Se levanta
+# en Recolección si la orden la requiere y si no en Recepción; la orden no puede
+# completar ni anular esos pasos sin el inventario enviado.
+# --------------------------------------------------------------------------
+PASOS_INVENTARIO = ("Recolección", "Recepción")
+MOMENTO_RECOLECCION = "Recolección"
+MOMENTO_RECEPCION = "Recepción"
+
+# Zonas de carrocería de la hoja de inventario: (número, zona, lado)
+ZONAS_CARROCERIA = [
+    (1, "Defensa delantera", "Frente"),
+    (2, "Cofre", "Frente"),
+    (3, "Parrilla / faros", "Frente"),
+    (4, "Salpicadera delantera izquierda", "Izquierdo"),
+    (5, "Puerta delantera izquierda", "Izquierdo"),
+    (6, "Puerta trasera izquierda", "Izquierdo"),
+    (7, "Costado / salpicadera trasera izquierda", "Izquierdo"),
+    (8, "Salpicadera delantera derecha", "Derecho"),
+    (9, "Puerta delantera derecha", "Derecho"),
+    (10, "Puerta trasera derecha", "Derecho"),
+    (11, "Costado / salpicadera trasera derecha", "Derecho"),
+    (12, "Toldo", "Techo"),
+    (13, "Cajuela / puerta trasera", "Trasera"),
+    (14, "Defensa trasera / calaveras", "Trasera"),
+    (15, "Parabrisas", "Cristales"),
+    (16, "Medallón", "Cristales"),
+    (17, "Cristales laterales", "Cristales"),
+    (18, "Rines y llantas (4)", "Llantas"),
+    (19, "Interiores (asientos, tablero, vestiduras)", "Interior"),
+]
+
+# Renglones que se precargan en el inventario: (grupo, concepto)
+GRUPO_ACCESORIO = "Accesorio"
+GRUPO_DOCUMENTO = "Documento y llave"
+ACCESORIOS_INVENTARIO = [(GRUPO_ACCESORIO, c) for c in (
+    "Llanta de refacción", "Gato", "Llave de cruz / birlos", "Birlo de seguridad (llave)",
+    "Triángulos / señalamientos", "Extintor", "Cables pasacorriente", "Tapetes", "Radio / pantalla",
+    "Antena", "Encendedor / toma 12 V", "Espejos laterales (2)", "Espejo interior", "Tapones de rines",
+    "Tapón de gasolina", "Limpiaparabrisas", "Emblemas", "Cubrecarga / cortina de cajuela",
+    "Portaplacas / placas (2)", "Objetos personales (describir)")] + [(GRUPO_DOCUMENTO, c) for c in (
+    "Tarjeta de circulación", "Póliza de seguro", "Orden de admisión / valuación de la aseguradora",
+    "Manual del propietario", "Llave principal", "Llave de repuesto", "Control de alarma",
+    "Tarjeta o tag de peaje")]
+
+# Ángulos de la evidencia fotográfica; al enviar el inventario se exige una foto
+# de cada ángulo obligatorio (las fotos de cada daño van en su renglón de daños)
+ANGULO_DANO = "Daño de cerca"
+ANGULOS_OBLIGATORIOS = [
+    "Frente completo", "Trasera completa", "Costado izquierdo", "Costado derecho",
+    "Esquinas en diagonal", "Tablero encendido", "VIN", "Placas", "Interior",
+    "Cajuela con refacción y herramienta"]
+ANGULOS_FOTO = ANGULOS_OBLIGATORIOS + [ANGULO_DANO]
 
 # Permisos sobre Orden Taller; los roles no listados reciben PERMISOS_BASE
 PERMISOS_BASE = ["read", "write", "print", "report"]
@@ -188,6 +264,8 @@ PERMISOS = {
     ROL_RECEPCION: ["read", "write", "create", "print", "report"],
     "Facturista": ["read", "write", "submit", "print", "report", "export"],
 }
+# Roles que ven la sección Costeo (campos con permlevel 1)
+ROLES_COSTEO = [ROL_SUPERVISOR, "Facturista", "System Manager"]
 
 
 # ==========================================================================
@@ -549,6 +627,7 @@ def instalar(reconstruir=False):
     asignar_permisos()
     crear_workflow(reconstruir=reconstruir)
     crear_reglas_ejemplo()
+    crear_zonas()
     frappe.db.commit()
     frappe.clear_cache(doctype=DOCTYPE)
     print(f"Workflow '{NOMBRE_WORKFLOW}' listo: "
@@ -627,6 +706,30 @@ def asignar_permisos():
         for ptype in ptypes:
             update_permission_property(DOCTYPE_VALUACION, rol, 0, ptype, 1)
 
+    # Inventario: lo levanta el chofer (Recolección) o recepción; el jefe además cancela
+    for rol in roles():
+        add_permission(DOCTYPE_INVENTARIO, rol, 0)
+        if rol == ROL_SUPERVISOR:
+            ptypes = ["read", "write", "create", "submit", "cancel", "amend", "delete", "report", "print"]
+        elif rol in (ROL_RECEPCION, PASOS[PASO_RECOLECCION]):
+            ptypes = ["read", "write", "create", "submit", "report", "print"]
+        else:
+            ptypes = ["read", "print"]
+        for ptype in ptypes:
+            update_permission_property(DOCTYPE_INVENTARIO, rol, 0, ptype, 1)
+
+    # Zonas de carrocería: todos las consultan; el jefe las administra
+    for rol in roles():
+        add_permission(DOCTYPE_ZONA, rol, 0)
+        ptypes = ["read", "write", "create", "delete", "report"] if rol == ROL_SUPERVISOR else ["read"]
+        for ptype in ptypes:
+            update_permission_property(DOCTYPE_ZONA, rol, 0, ptype, 1)
+
+    # Costeo (permlevel 1 en Orden Taller): solo el jefe y el facturista lo ven
+    for rol in ROLES_COSTEO:
+        add_permission(DOCTYPE, rol, 1)
+        update_permission_property(DOCTYPE, rol, 1, "read", 1)
+
     for rol in roles():
         add_permission(DOCTYPE_VEHICULO, rol, 0)
         ptypes = ["read", "write", "create", "report", "print"] if rol in (ROL_SUPERVISOR, ROL_RECEPCION) else ["read"]
@@ -667,6 +770,16 @@ def crear_workflow(reconstruir=False):
         wf.append("transitions", fila)
 
     wf.save(ignore_permissions=True)
+
+
+def crear_zonas():
+    """Catálogo Zona de Carrocería: crea las zonas que falten (no cambia las editadas)."""
+    import frappe
+
+    for numero, zona, lado in ZONAS_CARROCERIA:
+        if not frappe.db.exists(DOCTYPE_ZONA, zona):
+            frappe.get_doc({"doctype": DOCTYPE_ZONA, "numero": numero, "zona": zona,
+                            "lado": lado}).insert(ignore_permissions=True)
 
 
 def crear_reglas_ejemplo():

@@ -1,0 +1,68 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "zona",
+  "codigo",
+  "tamano_cm",
+  "foto",
+  "motivo_servicio"
+ ],
+ "fields": [
+  {
+   "fieldname": "zona",
+   "fieldtype": "Link",
+   "label": "Zona",
+   "options": "Zona de Carroceria",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "codigo",
+   "fieldtype": "Select",
+   "label": "Código",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "options": "R\nG\nE\nQ\nF\nP\nX",
+   "description": "R = rayón · G = golpe / abolladura · E = estrellado · Q = quebrado · F = faltante · P = pintura dañada · X = óxido"
+  },
+  {
+   "fieldname": "tamano_cm",
+   "fieldtype": "Float",
+   "label": "Tamaño (cm)",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "foto",
+   "fieldtype": "Attach Image",
+   "label": "Foto",
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "motivo_servicio",
+   "fieldtype": "Check",
+   "label": "Motivo del servicio",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Es el daño que se va a reparar."
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-15 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Danio de Carroceria",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

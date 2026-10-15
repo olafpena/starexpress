@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "numero",
+  "zona",
+  "lado"
+ ],
+ "fields": [
+  {
+   "fieldname": "numero",
+   "fieldtype": "Int",
+   "label": "Número",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "bold": 1,
+   "description": "El mismo número del diagrama de la hoja de inventario."
+  },
+  {
+   "fieldname": "zona",
+   "fieldtype": "Data",
+   "label": "Zona",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "lado",
+   "fieldtype": "Select",
+   "label": "Lado",
+   "options": "\nFrente\nTrasera\nIzquierdo\nDerecho\nTecho\nCristales\nLlantas\nInterior",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-15 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Zona de Carroceria",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "share": 1,
+   "email": 1
+  }
+ ],
+ "sort_field": "numero",
+ "sort_order": "ASC",
+ "states": [],
+ "autoname": "field:zona",
+ "naming_rule": "By fieldname",
+ "title_field": "zona",
+ "search_fields": "numero,lado",
+ "track_changes": 1
+}

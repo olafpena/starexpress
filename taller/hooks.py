@@ -23,8 +23,9 @@ after_install = "taller.flujo.configuracion.instalar"
 # Validación del VIN y prellenado (taller/vehiculo/vin.py) en los formularios con VIN
 doctype_js = {
     "Vehiculo Taller": "public/js/vin.js",
-    "Orden Taller": "public/js/vin.js",
+    "Orden Taller": ["public/js/vin.js", "public/js/fotos.js"],
     "Valuacion Taller": "public/js/vin.js",
+    "Inventario": "public/js/fotos.js",
 }
 
 # Montos y documentos de ERPNext ligados a la Orden Taller (taller/erp/documentos.py)
@@ -33,6 +34,8 @@ _eventos_documento = {
     for evento in ("on_submit", "on_cancel", "on_trash", "on_update_after_submit")
 }
 doc_events = {
+    # Fotos y firmas de las unidades siempre privadas (taller/fotos.py)
+    "File": {"after_insert": "taller.fotos.forzar_privado"},
     "Quotation": _eventos_documento,
     "Sales Order": _eventos_documento,
     "Sales Invoice": _eventos_documento,

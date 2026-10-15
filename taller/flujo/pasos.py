@@ -14,9 +14,12 @@ del flujo de la orden y la mantiene el servidor a partir de `workflow_state`:
     tramo se registra como Timesheet (taller/erp/costeo.py).
   * Cancelada anula el paso en curso; Reactivar (volver a Nueva) limpia los
     estados pero conserva las horas reales acumuladas.
+  * Recolección y Recepción no se completan ni se anulan sin el Inventario de la
+    orden enviado (validar_inventario).
 """
 
 import frappe
+from frappe import _
 from frappe.utils import flt, get_datetime, now_datetime, time_diff_in_hours
 
 from taller.flujo.configuracion import (
@@ -25,10 +28,12 @@ from taller.flujo.configuracion import (
     CAMPO_PASOS,
     CAMPO_TIPO_ORDEN,
     COMPLETADO,
+    DOCTYPE_INVENTARIO,
     EN_PROCESO,
     ESTADO_CANCELADA,
     ESTADO_INICIAL,
     HORAS_ESTIMADAS,
+    PASOS_INVENTARIO,
     paso_de_estado,
     secuencia,
     sufijo_de_estado,
@@ -55,6 +60,21 @@ def sincronizar_pasos(doc):
     origen = anterior.get(CAMPO_ESTADO) if anterior else None
     if destino and origen != destino:
         aplicar_estado(doc, destino)
+
+
+def validar_inventario(doc):
+    """La orden no sale de su primer paso (Recolección o Recepción) sin el inventario enviado."""
+    anterior = doc.get_doc_before_save()
+    destino = doc.get(CAMPO_ESTADO)
+    if not destino or (anterior and anterior.get(CAMPO_ESTADO) == destino):
+        return
+    if paso_de_estado(destino) not in PASOS_INVENTARIO or sufijo_de_estado(destino) not in (COMPLETADO, ANULADO):
+        return
+    if doc.get("inventario") and frappe.db.get_value(DOCTYPE_INVENTARIO, doc.inventario, "docstatus") == 1:
+        return
+    enlace = frappe.utils.get_link_to_form(DOCTYPE_INVENTARIO, doc.inventario) if doc.get("inventario") else ""
+    frappe.throw(_("Envía el inventario de la unidad {0} (firmas y fotos) antes de salir de {1}.")
+                 .format(enlace, paso_de_estado(destino)), title=_("Falta el inventario"))
 
 
 def generar_pasos(doc):

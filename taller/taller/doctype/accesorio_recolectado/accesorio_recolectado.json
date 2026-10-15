@@ -1,0 +1,58 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "grupo",
+  "concepto",
+  "estado",
+  "observacion"
+ ],
+ "fields": [
+  {
+   "fieldname": "grupo",
+   "fieldtype": "Select",
+   "label": "Grupo",
+   "options": "Accesorio\nDocumento y llave",
+   "default": "Accesorio",
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "concepto",
+   "fieldtype": "Data",
+   "label": "Elemento",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "estado",
+   "fieldtype": "Select",
+   "label": "Estado",
+   "options": "\nSí\nNo\nN/A",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "observacion",
+   "fieldtype": "Small Text",
+   "label": "Observaciones",
+   "in_list_view": 1,
+   "columns": 4
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-15 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Accesorio Recolectado",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1
+}

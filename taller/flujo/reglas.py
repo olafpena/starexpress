@@ -5,7 +5,9 @@ Cada vez que una Orden Taller cambia de `workflow_state` (por botón del
 workflow o por guardado directo) se evalúan las "Regla Transicion Taller"
 activas que apliquen:
 
-  * tipo_orden  : "Todos" o el tipo de orden (Hojalatería y Pintura, Mecánica)
+  * tipo_orden  : "Todos" o el tipo de orden (Hojalatería y Pintura, Mecánica,
+                  Ambos). Una orden Ambos toma también las reglas de Mecánica y
+                  de Hojalatería y Pintura (TIPOS_DE_REGLAS)
   * tipo_flujo  : "Todos" o el tipo de la orden
   * estado_origen (opcional): solo si la orden viene de ese estado
   * estado_destino (opcional): solo si la orden va a ese estado
@@ -28,7 +30,13 @@ import frappe
 from frappe import _
 from frappe.utils.safe_exec import safe_eval
 
-from taller.flujo.configuracion import CAMPO_ESTADO, DOCTYPE_REGLAS, paso_de_estado, tipo_orden_de
+from taller.flujo.configuracion import (
+    CAMPO_ESTADO,
+    DOCTYPE_REGLAS,
+    TIPOS_DE_REGLAS,
+    paso_de_estado,
+    tipo_orden_de,
+)
 
 
 def validar_reglas_transicion(doc):
@@ -55,10 +63,11 @@ def validar_reglas_transicion(doc):
 
 
 def obtener_reglas(tipo_flujo, tipo_orden):
+    tipos = ["Todos"] + TIPOS_DE_REGLAS.get(tipo_orden, [tipo_orden or ""])
     return frappe.get_all(
         DOCTYPE_REGLAS,
         filters={"activo": 1, "tipo_flujo": ["in", ["Todos", tipo_flujo or ""]],
-                 "tipo_orden": ["in", ["Todos", tipo_orden or ""]]},
+                 "tipo_orden": ["in", tipos]},
         fields=["name", "paso", "estado_origen", "estado_destino",
                 "tipo_regla", "condicion", "mensaje"],
         order_by="prioridad asc, creation asc",

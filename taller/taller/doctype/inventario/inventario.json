@@ -1,0 +1,540 @@
+{
+ "actions": [],
+ "creation": "2026-10-15 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "sec_general",
+  "orden_taller",
+  "momento",
+  "tipo_orden",
+  "col_general",
+  "folio_hoja",
+  "fecha_inventario",
+  "tipo_flujo",
+  "sec_cliente",
+  "cliente",
+  "cliente_nombre",
+  "telefono",
+  "email",
+  "aseguradora",
+  "col_cliente",
+  "direccion_recoleccion",
+  "asesor_agencia",
+  "telefono_contacto",
+  "orden_agencia",
+  "numero_siniestro",
+  "sec_levanta",
+  "levantado_por",
+  "levantado_por_nombre",
+  "col_levanta",
+  "tipo_traslado",
+  "sec_vehiculo",
+  "vehiculo",
+  "marca",
+  "modelo",
+  "anio",
+  "col_vehiculo",
+  "color",
+  "placas",
+  "vin",
+  "numero_motor",
+  "transmision",
+  "sec_estado",
+  "kilometraje",
+  "combustible",
+  "enciende",
+  "col_estado",
+  "testigo_check_engine",
+  "testigo_abs",
+  "testigo_bolsa_aire",
+  "testigo_aceite",
+  "testigo_bateria",
+  "testigo_otro",
+  "sec_accesorios",
+  "accesorios",
+  "sec_danos",
+  "danos",
+  "sec_fotos",
+  "fotos_html",
+  "fotos",
+  "sec_observaciones",
+  "observaciones",
+  "sec_firmas",
+  "nombre_entrega",
+  "firma_entrega",
+  "fecha_firma_entrega",
+  "col_firmas",
+  "firma_recibe",
+  "fecha_firma_recibe",
+  "sec_recepcion",
+  "recibido_por",
+  "fecha_recepcion",
+  "col_recepcion",
+  "firma_recepcion",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "sec_general",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "orden_taller",
+   "fieldtype": "Link",
+   "label": "Orden de taller",
+   "options": "Orden Taller",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1,
+   "set_only_once": 1
+  },
+  {
+   "fieldname": "momento",
+   "fieldtype": "Select",
+   "label": "Se levanta en",
+   "options": "Recolección\nRecepción",
+   "default": "Recepción",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Recolección si la orden la requiere; si no, Recepción."
+  },
+  {
+   "fieldname": "tipo_orden",
+   "fieldtype": "Data",
+   "label": "Servicio solicitado",
+   "fetch_from": "orden_taller.tipo_orden",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_general",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "folio_hoja",
+   "fieldtype": "Data",
+   "label": "Folio de la hoja",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "El número preimpreso de la hoja en papel."
+  },
+  {
+   "fieldname": "fecha_inventario",
+   "fieldtype": "Datetime",
+   "label": "Fecha y hora",
+   "default": "Now",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tipo_flujo",
+   "fieldtype": "Data",
+   "label": "Tipo de cliente",
+   "fetch_from": "orden_taller.tipo_flujo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_cliente",
+   "fieldtype": "Section Break",
+   "label": "Cliente y contacto"
+  },
+  {
+   "fieldname": "cliente",
+   "fieldtype": "Link",
+   "label": "Cliente / agencia",
+   "options": "Customer",
+   "fetch_from": "orden_taller.cliente",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cliente_nombre",
+   "fieldtype": "Data",
+   "label": "Nombre",
+   "fetch_from": "orden_taller.cliente_nombre",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "telefono",
+   "fieldtype": "Data",
+   "label": "Teléfono",
+   "fetch_from": "orden_taller.telefono",
+   "read_only": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Correo",
+   "fetch_from": "orden_taller.email",
+   "read_only": 1
+  },
+  {
+   "fieldname": "aseguradora",
+   "fieldtype": "Link",
+   "label": "Aseguradora",
+   "options": "Customer",
+   "fetch_from": "orden_taller.aseguradora",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_cliente",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "direccion_recoleccion",
+   "fieldtype": "Small Text",
+   "label": "Dirección de recolección",
+   "fetch_from": "orden_taller.direccion_recoleccion",
+   "read_only": 1,
+   "depends_on": "eval:doc.momento==\"Recolección\""
+  },
+  {
+   "fieldname": "asesor_agencia",
+   "fieldtype": "Data",
+   "label": "Contacto en la agencia",
+   "fetch_from": "orden_taller.asesor_agencia",
+   "read_only": 1
+  },
+  {
+   "fieldname": "telefono_contacto",
+   "fieldtype": "Data",
+   "label": "Teléfono del contacto",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "orden_agencia",
+   "fieldtype": "Data",
+   "label": "Orden de la agencia",
+   "fetch_from": "orden_taller.orden_agencia",
+   "read_only": 1
+  },
+  {
+   "fieldname": "numero_siniestro",
+   "fieldtype": "Data",
+   "label": "Número de siniestro",
+   "fetch_from": "orden_taller.numero_siniestro",
+   "read_only": 1
+  },
+  {
+   "fieldname": "sec_levanta",
+   "fieldtype": "Section Break",
+   "label": "Quién levanta el inventario"
+  },
+  {
+   "fieldname": "levantado_por",
+   "fieldtype": "Link",
+   "label": "Levantado por",
+   "options": "Employee",
+   "description": "El chofer en Recolección; el asesor en Recepción."
+  },
+  {
+   "fieldname": "levantado_por_nombre",
+   "fieldtype": "Data",
+   "label": "Nombre",
+   "fetch_from": "levantado_por.employee_name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_levanta",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tipo_traslado",
+   "fieldtype": "Select",
+   "label": "Tipo de traslado",
+   "options": "\nRodando\nGrúa",
+   "depends_on": "eval:doc.momento==\"Recolección\""
+  },
+  {
+   "fieldname": "sec_vehiculo",
+   "fieldtype": "Section Break",
+   "label": "Vehículo"
+  },
+  {
+   "fieldname": "vehiculo",
+   "fieldtype": "Link",
+   "label": "Vehículo",
+   "options": "Vehiculo Taller",
+   "fetch_from": "orden_taller.vehiculo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "marca",
+   "fieldtype": "Data",
+   "label": "Marca",
+   "fetch_from": "orden_taller.marca",
+   "read_only": 1
+  },
+  {
+   "fieldname": "modelo",
+   "fieldtype": "Data",
+   "label": "Modelo",
+   "fetch_from": "orden_taller.modelo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "anio",
+   "fieldtype": "Int",
+   "label": "Año",
+   "fetch_from": "orden_taller.anio",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col_vehiculo",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "color",
+   "fieldtype": "Data",
+   "label": "Color",
+   "fetch_from": "orden_taller.color",
+   "read_only": 1
+  },
+  {
+   "fieldname": "placas",
+   "fieldtype": "Data",
+   "label": "Placas",
+   "fetch_from": "orden_taller.placas",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "vin",
+   "fieldtype": "Data",
+   "label": "VIN / Número de serie",
+   "fetch_from": "orden_taller.vin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "numero_motor",
+   "fieldtype": "Data",
+   "label": "Número de motor",
+   "fetch_from": "vehiculo.numero_motor",
+   "fetch_if_empty": 1,
+   "description": "Se guarda en el vehículo al enviar el inventario, si allá está vacío."
+  },
+  {
+   "fieldname": "transmision",
+   "fieldtype": "Select",
+   "label": "Transmisión",
+   "options": "\nManual\nAutomática",
+   "fetch_from": "vehiculo.transmision",
+   "fetch_if_empty": 1
+  },
+  {
+   "fieldname": "sec_estado",
+   "fieldtype": "Section Break",
+   "label": "Kilometraje, combustible y tablero"
+  },
+  {
+   "fieldname": "kilometraje",
+   "fieldtype": "Int",
+   "label": "Kilometraje"
+  },
+  {
+   "fieldname": "combustible",
+   "fieldtype": "Select",
+   "label": "Combustible",
+   "options": "\nVacío\n1/4\n1/2\n3/4\nLleno"
+  },
+  {
+   "fieldname": "enciende",
+   "fieldtype": "Check",
+   "label": "Enciende"
+  },
+  {
+   "fieldname": "col_estado",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "testigo_check_engine",
+   "fieldtype": "Check",
+   "label": "Testigo check engine"
+  },
+  {
+   "fieldname": "testigo_abs",
+   "fieldtype": "Check",
+   "label": "Testigo ABS"
+  },
+  {
+   "fieldname": "testigo_bolsa_aire",
+   "fieldtype": "Check",
+   "label": "Testigo bolsa de aire"
+  },
+  {
+   "fieldname": "testigo_aceite",
+   "fieldtype": "Check",
+   "label": "Testigo de aceite"
+  },
+  {
+   "fieldname": "testigo_bateria",
+   "fieldtype": "Check",
+   "label": "Testigo de batería"
+  },
+  {
+   "fieldname": "testigo_otro",
+   "fieldtype": "Data",
+   "label": "Otro testigo"
+  },
+  {
+   "fieldname": "sec_accesorios",
+   "fieldtype": "Section Break",
+   "label": "Accesorios, documentos y llaves"
+  },
+  {
+   "fieldname": "accesorios",
+   "fieldtype": "Table",
+   "label": "Accesorios",
+   "options": "Accesorio Recolectado"
+  },
+  {
+   "fieldname": "sec_danos",
+   "fieldtype": "Section Break",
+   "label": "Carrocería y cristales",
+   "description": "Un renglón por daño; una zona sin daños no lleva renglón. Cada daño lleva su foto."
+  },
+  {
+   "fieldname": "danos",
+   "fieldtype": "Table",
+   "label": "Daños",
+   "options": "Danio de Carroceria"
+  },
+  {
+   "fieldname": "sec_fotos",
+   "fieldtype": "Section Break",
+   "label": "Evidencia fotográfica",
+   "description": "Una foto por cada ángulo: Frente completo, Trasera completa, Costado izquierdo, Costado derecho, Esquinas en diagonal, Tablero encendido, VIN, Placas, Interior, Cajuela con refacción y herramienta."
+  },
+  {
+   "fieldname": "fotos_html",
+   "fieldtype": "HTML",
+   "label": "Visor"
+  },
+  {
+   "fieldname": "fotos",
+   "fieldtype": "Table",
+   "label": "Fotos",
+   "options": "Foto Orden Taller"
+  },
+  {
+   "fieldname": "sec_observaciones",
+   "fieldtype": "Section Break",
+   "label": "Observaciones"
+  },
+  {
+   "fieldname": "observaciones",
+   "fieldtype": "Text",
+   "label": "Observaciones generales",
+   "description": "Ruidos, fugas, olores, fallas reportadas por el cliente o la agencia."
+  },
+  {
+   "fieldname": "sec_firmas",
+   "fieldtype": "Section Break",
+   "label": "Firmas y conformidad",
+   "description": "Ambas partes confirman que el vehículo se entrega y se recibe en el estado descrito en este inventario y en las fotos."
+  },
+  {
+   "fieldname": "nombre_entrega",
+   "fieldtype": "Data",
+   "label": "Entrega (agencia o cliente)"
+  },
+  {
+   "fieldname": "firma_entrega",
+   "fieldtype": "Signature",
+   "label": "Firma de quien entrega"
+  },
+  {
+   "fieldname": "fecha_firma_entrega",
+   "fieldtype": "Datetime",
+   "label": "Fecha y hora"
+  },
+  {
+   "fieldname": "col_firmas",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "firma_recibe",
+   "fieldtype": "Signature",
+   "label": "Firma de quien recibe (taller)"
+  },
+  {
+   "fieldname": "fecha_firma_recibe",
+   "fieldtype": "Datetime",
+   "label": "Fecha y hora"
+  },
+  {
+   "fieldname": "sec_recepcion",
+   "fieldtype": "Section Break",
+   "label": "Recepción en taller",
+   "depends_on": "eval:doc.momento==\"Recolección\"",
+   "description": "La llena el asesor al llegar la unidad; se puede capturar con el inventario ya enviado."
+  },
+  {
+   "fieldname": "recibido_por",
+   "fieldtype": "Link",
+   "label": "Recibido por",
+   "options": "User",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "fecha_recepcion",
+   "fieldtype": "Datetime",
+   "label": "Fecha y hora de llegada",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "col_recepcion",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "firma_recepcion",
+   "fieldtype": "Signature",
+   "label": "Firma",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Inventario",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1,
+   "search_index": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-15 22:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Inventario",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "share": 1,
+   "email": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "format:INV-{YYYY}-{#####}",
+ "naming_rule": "Expression (old style)",
+ "is_submittable": 1,
+ "track_changes": 1,
+ "title_field": "placas",
+ "show_title_field_in_link": 0,
+ "search_fields": "orden_taller,placas,cliente_nombre,folio_hoja"
+}

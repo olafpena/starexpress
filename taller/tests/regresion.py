@@ -11,16 +11,19 @@ Requiere la compañía configurada (taller.erp.configuracion_empresa.configurar)
 El caso de Audatex solo corre si se pasa la ruta de un PDF de valuación.
 """
 
+import base64
+import io
 import traceback
 
 import frappe
 from frappe.model.workflow import apply_workflow, get_transitions
 from frappe.utils import add_to_date, flt, now_datetime, nowdate
 
+from taller import fotos as fotos_unidad
 from taller.erp import costeo, documentos
 from taller.flujo import configuracion as conf
 
-HYP, MECANICA = conf.TIPO_ORDEN_FLUJO, conf.TIPO_ORDEN_MECANICA
+HYP, MECANICA, AMBOS = conf.TIPO_ORDEN_FLUJO, conf.TIPO_ORDEN_MECANICA, conf.TIPO_ORDEN_AMBOS
 VIN_TOYOTA = "2T3J1RFV6SW586811"  # RAV4 2025, dígito verificador 6
 ALMACEN = None
 CASOS = []
@@ -68,12 +71,64 @@ def cliente(nombre, grupo="Particular"):
                            "customer_group": grupo}).insert().name
 
 
-def orden(**campos):
+def orden(inventario=True, **campos):
+    """Orden nueva; con inventario=True además levanta y envía su inventario."""
     datos = {"doctype": "Orden Taller", "tipo_orden": HYP, "tipo_flujo": "Particular"}
     datos.update(campos)
     if "cliente" not in datos:
         datos["cliente"] = cliente("Cliente")
-    return frappe.get_doc(datos).insert()
+    o = frappe.get_doc(datos).insert()
+    if inventario:
+        levantar_inventario(o)
+        o.reload()
+    return o
+
+
+def jpeg(color=(200, 30, 30), lado=1200):
+    from PIL import Image
+
+    salida = io.BytesIO()
+    Image.new("RGB", (lado, lado), color).save(salida, format="JPEG", quality=95)
+    return salida.getvalue()
+
+
+def foto_de_celular():
+    """JPEG con ruido de unos 1.5 MB, como una foto de celular sin optimizar."""
+    import os
+
+    from PIL import Image
+
+    salida = io.BytesIO()
+    Image.frombytes("RGB", (1200, 1200), os.urandom(1200 * 1200 * 3)).save(salida, format="JPEG", quality=95)
+    return salida.getvalue()
+
+
+def firma():
+    from PIL import Image
+
+    salida = io.BytesIO()
+    Image.new("RGB", (40, 20), (0, 0, 0)).save(salida, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(salida.getvalue()).decode()
+
+
+def subir_foto(doctype, nombre, contenido=None, privado=0):
+    """Sube una foto como lo haría la API (por omisión pública, para probar que se vuelve privada)."""
+    return frappe.get_doc({"doctype": "File", "file_name": f"reg_{frappe.generate_hash(length=6)}.jpg",
+                           "attached_to_doctype": doctype, "attached_to_name": nombre, "is_private": privado,
+                           "content": contenido or jpeg()}).insert().file_url
+
+
+def levantar_inventario(o, enviar=True, **campos):
+    inv = frappe.get_doc(conf.DOCTYPE_INVENTARIO, o.inventario)
+    url = subir_foto(inv.doctype, inv.name)
+    for angulo in conf.ANGULOS_OBLIGATORIOS:
+        inv.append("fotos", {"imagen": url, "angulo": angulo})
+    inv.update({"firma_entrega": firma(), "firma_recibe": firma(), "nombre_entrega": "Cliente REG"})
+    inv.update(campos)
+    inv.save()
+    if enviar:
+        inv.submit()
+    return inv
 
 
 def valuacion_manual(o, partidas=None):
@@ -451,8 +506,8 @@ def estatus_catalogo_y_valor_inicial():
     bloquea(lambda: frappe.delete_doc(conf.DOCTYPE_ESTATUS, conf.ESTATUS_ACTIVO), "no se puede borrar")
     sin_estatus = frappe.get_all(conf.DOCTYPE, filters={conf.CAMPO_ESTATUS: ["in", ["", None]]}, pluck="name")
     verifica(not sin_estatus, f"órdenes sin estatus: {sin_estatus}")
-    for tipo in (HYP, MECANICA):
-        verifica(orden(tipo_orden=tipo).estatus == conf.ESTATUS_ACTIVO, f"una orden nueva de {tipo} debe nacer Activa")
+    for tipo in conf.TIPOS_ORDEN:
+        verifica(orden(tipo_orden=tipo, inventario=False).estatus == conf.ESTATUS_ACTIVO, f"una orden nueva de {tipo} debe nacer Activa")
     campo = frappe.get_meta(conf.DOCTYPE).get_field(conf.CAMPO_ESTATUS)
     verifica(campo.in_standard_filter and campo.in_list_view and campo.allow_on_submit,
              "el estatus debe estar en filtros y lista, y ser editable en órdenes terminadas")
@@ -495,6 +550,146 @@ def estatus_en_orden_terminada():
              "no se pudo cambiar el estatus de una orden terminada")
 
 
+@caso
+def inventario_obligatorio_en_recepcion():
+    o = orden(placas="REG30", inventario=False)
+    inv = frappe.get_doc(conf.DOCTYPE_INVENTARIO, o.inventario)
+    verifica(inv.orden_taller == o.name and inv.momento == conf.MOMENTO_RECEPCION and inv.docstatus == 0,
+             f"inventario al crear la orden: {inv.orden_taller} {inv.momento} {inv.docstatus}")
+    verifica(len(inv.accesorios) == len(conf.ACCESORIOS_INVENTARIO) == 28, f"accesorios precargados {len(inv.accesorios)}")
+    verifica(inv.placas == "REG30" and inv.cliente == o.cliente, "el inventario no trajo los datos de la orden")
+    bloquea(lambda: frappe.get_doc({"doctype": conf.DOCTYPE_INVENTARIO, "orden_taller": o.name}).insert(),
+            "ya tiene el inventario")
+    o = avanza(o, "Enviar a Recepción")
+    valuacion_manual(o)
+    bloquea(lambda: apply_workflow(o, "Completar"), "inventario")
+    o.reload()
+    bloquea(lambda: apply_workflow(o, "Anular"), "inventario")
+    o.reload()
+
+    sin_firmas = levantar_inventario(o, enviar=False, firma_entrega=None)
+    bloquea(lambda: sin_firmas.submit(), "firma de quien entrega")
+    sin_firmas.reload()
+    sin_firmas.fotos = [f for f in sin_firmas.fotos if f.angulo != "Placas"]
+    sin_firmas.firma_entrega = firma()
+    sin_firmas.save()
+    bloquea(lambda: sin_firmas.submit(), "Placas")
+    sin_firmas.reload()
+    sin_firmas.append("fotos", {"imagen": sin_firmas.fotos[0].imagen, "angulo": "Placas"})
+    sin_firmas.append("danos", {"zona": "Cofre", "codigo": "G", "tamano_cm": 10})
+    sin_firmas.save()
+    bloquea(lambda: sin_firmas.submit(), "daños 1")
+    sin_firmas.reload()
+    sin_firmas.danos[0].foto = subir_foto(sin_firmas.doctype, sin_firmas.name)
+    sin_firmas.update({"kilometraje": 45210, "numero_motor": "MOT123", "transmision": "Automática"})
+    sin_firmas.save()
+    sin_firmas.submit()
+
+    foto = sin_firmas.fotos[0]
+    verifica(foto.imagen.startswith("/private/") and foto.miniatura and foto.miniatura.startswith("/private/"),
+             f"la foto debe quedar privada y con miniatura: {foto.imagen} {foto.miniatura}")
+    verifica(foto.etapa == conf.MOMENTO_RECEPCION and foto.tomada_por and foto.fecha, "faltan etapa, autor o fecha de la foto")
+    verifica(sin_firmas.danos[0].foto.startswith("/private/"), f"foto del daño pública: {sin_firmas.danos[0].foto}")
+    o = avanza(frappe.get_doc(conf.DOCTYPE, o.name), "Completar")
+    verifica(o.workflow_state == "Recepción - Completado", o.workflow_state)
+    verifica(o.kilometraje == 45210, f"kilometraje en la orden {o.kilometraje}")
+    if o.vehiculo:
+        verifica(frappe.db.get_value(conf.DOCTYPE_VEHICULO, o.vehiculo, "numero_motor") == "MOT123",
+                 "el número de motor no pasó al vehículo")
+
+
+@caso
+def inventario_en_recoleccion():
+    o = orden(tipo_flujo="Agencia", requiere_recoleccion=1, cliente=cliente("Agencia Inv", "Agencia"),
+              direccion_recoleccion="Av. Siempre Viva 742", inventario=False)
+    inv = frappe.get_doc(conf.DOCTYPE_INVENTARIO, o.inventario)
+    verifica(inv.momento == conf.MOMENTO_RECOLECCION and inv.direccion_recoleccion, f"momento {inv.momento}")
+    o = avanza(o, "Programar Recolección")
+    bloquea(lambda: apply_workflow(o, "Completar"), "inventario")
+    inv = levantar_inventario(o, tipo_traslado="Grúa")
+    o = avanza(frappe.get_doc(conf.DOCTYPE, o.name), "Completar", "Enviar a Recepción")
+    verifica(o.workflow_state == "Recepción - En Proceso", o.workflow_state)
+    llegada = add_to_date(now_datetime(), hours=-1)
+    inv.reload()
+    inv.update({"recibido_por": "Administrator", "fecha_recepcion": llegada, "firma_recepcion": firma()})
+    inv.save()  # después de enviar (allow_on_submit)
+    verifica(str(frappe.db.get_value(conf.DOCTYPE, o.name, "fecha_ingreso"))[:16] == str(llegada)[:16],
+             "la llegada al taller no pasó a la fecha de ingreso de la orden")
+    otra = orden(inventario=False)
+    otra.requiere_recoleccion = 1
+    otra.save()
+    verifica(frappe.db.get_value(conf.DOCTYPE_INVENTARIO, otra.inventario, "momento") == conf.MOMENTO_RECOLECCION,
+             "al pedir recolección, el inventario sin enviar debe pasar a Recolección")
+
+
+@caso
+def ambos_mecanica_y_carroceria():
+    o = orden(tipo_orden=AMBOS, placas="REG31")
+    verifica([p.paso for p in o.pasos] == conf.SECUENCIA_AMBOS, f"pasos de Ambos {[p.paso for p in o.pasos]}")
+    o = avanza(o, "Enviar a Recepción")
+    bloquea(lambda: apply_workflow(o, "Completar"), "valuación")  # regla de Hojalatería y Pintura
+    o.reload()
+    valuacion_manual(o)
+    o = avanza(o, "Completar", "Enviar a Diagnóstico")
+    bloquea(lambda: apply_workflow(o, "Completar"), "diagnóstico")  # regla de Mecánica
+    o.reload()
+    o.diagnostico = "Suspensión y golpe en cofre"
+    o.save()
+    o = avanza(o, "Completar", "Enviar a Cotización")
+    enviar("Quotation", documentos.crear_cotizacion(o.name)[0])
+    o.reload()
+    o.presupuesto_aprobado = 1
+    o.save()
+    o = avanza(o, "Completar", "Enviar a Autorización del cliente", "Completar", "Enviar a Refacciones",
+               "Completar", "Enviar a Reparación", "Completar", "Enviar a Hallazgo adicional", "Anular",
+               "Enviar a Carrocería", "Completar", "Enviar a Preparación", "Completar", "Enviar a Pintura",
+               "Completar", "Enviar a Armado", "Completar", "Enviar a Pulido", "Completar",
+               "Enviar a Control de calidad y ruta")
+    verifica({"Retrabajo a Reparación", "Retrabajo a Carrocería", "Retrabajo a Pintura"} <= acciones(o),
+             f"retrabajo de Ambos: {acciones(o)}")
+    o = avanza(o, "Retrabajo a Carrocería")
+    verifica(estado_paso(o)["Carrocería"] == "En Proceso" and estado_paso(o)["Pulido"] is None,
+             f"retrabajo a Carrocería: {estado_paso(o)}")
+    from taller.flujo.reglas import obtener_reglas
+    tipos = {r.name: frappe.db.get_value(conf.DOCTYPE_REGLAS, r.name, "tipo_orden") for r in obtener_reglas("Particular", AMBOS)}
+    verifica({HYP, MECANICA, "Todos"} <= set(tipos.values()), f"reglas de Ambos {set(tipos.values())}")
+    hyp = avanza(orden(placas="REG32"), "Enviar a Recepción")
+    valuacion_manual(hyp)
+    hyp = avanza(hyp, "Completar")
+    verifica("Enviar a Diagnóstico" not in acciones(hyp), "Hojalatería y Pintura no debe pasar a Diagnóstico")
+
+
+@caso
+def costeo_solo_jefe_y_facturista():
+    meta = frappe.get_meta(conf.DOCTYPE)
+    for campo in costeo.CAMPOS_COSTEO + ["ingresos"]:
+        verifica(meta.get_field(campo).permlevel == 1, f"{campo} debe tener nivel de permiso 1")
+    con_nivel_1 = set(frappe.get_all("Custom DocPerm", filters={"parent": conf.DOCTYPE, "permlevel": 1, "read": 1},
+                                     pluck="role"))
+    verifica(set(conf.ROLES_COSTEO) <= con_nivel_1, f"roles con nivel 1: {con_nivel_1}")
+    verifica("Hojalatero" not in con_nivel_1 and "Asesor de Servicio" not in con_nivel_1,
+             f"técnicos y asesores no deben ver el costeo: {con_nivel_1}")
+
+
+@caso
+def zonas_y_fotos_de_la_orden():
+    zonas = frappe.get_all(conf.DOCTYPE_ZONA, fields=["numero", "zona"], order_by="numero asc")
+    verifica([z.numero for z in zonas] == list(range(1, 20)), f"zonas de carrocería {[z.numero for z in zonas]}")
+    o = orden(placas="REG33")
+    o = avanza(o, "Enviar a Recepción")
+    original = foto_de_celular()
+    o.append("fotos", {"imagen": subir_foto(o.doctype, o.name, original), "zona": "Cofre",
+                       "comentario": "Golpe antes de reparar"})
+    o.save()
+    f = o.fotos[0]
+    verifica(f.imagen.startswith("/private/") and f.miniatura and f.etapa == "Recepción" and f.paso == "Recepción",
+             f"foto de la orden: {f.imagen} {f.miniatura} {f.etapa} {f.paso}")
+    grande = frappe.get_doc("File", {"file_url": f.imagen})
+    verifica(grande.is_private, "el File de la foto debe ser privado")
+    verifica(len(original) > fotos_unidad.LIMITE_BYTES and grande.file_size < len(original) / 2,
+             f"la foto grande no se optimizó: {len(original)} -> {grande.file_size} bytes")
+
+
 def valuacion_audatex(pdf):
     from taller.taller.doctype.valuacion_taller.valuacion_taller import leer_pdf
 
@@ -531,7 +726,8 @@ def correr(pdf=None):
     global ALMACEN
     frappe.set_user("Administrator")
     frappe.get_doc("User", "Administrator").add_roles(conf.ROL_SUPERVISOR)
-    ALMACEN = frappe.db.get_single_value("Stock Settings", "default_warehouse")
+    from taller.erp.configuracion_empresa import almacen_predeterminado
+    ALMACEN = almacen_predeterminado()
     casos = list(CASOS) + ([lambda: valuacion_audatex(pdf)] if pdf else [])
     nombres = [c.__name__ for c in CASOS] + (["valuacion_audatex"] if pdf else [])
 

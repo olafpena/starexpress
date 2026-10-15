@@ -150,7 +150,7 @@ def configurar(company="StarExpress"):
     globales.default_company = company
     globales.disable_rounded_total = 1
     globales.save(ignore_permissions=True)
-    frappe.db.set_single_value("Stock Settings", "default_warehouse", almacen)
+    asignar_almacen_predeterminado(company, almacen)
 
     for forma, nombre in FORMAS_PAGO.items():
         asignar_cuenta_forma_pago(forma, company, cuenta(nombre))
@@ -193,6 +193,27 @@ def configurar(company="StarExpress"):
 
     frappe.db.commit()
     print(f"Compañía {company} configurada para el taller.")
+
+
+def asignar_almacen_predeterminado(company, almacen):
+    # ERPNext 16 movió el almacén predeterminado de Stock Settings a Company
+    # (16.37 lo tiene en Stock Settings; 16.51 en Company): se llena donde exista.
+    if frappe.get_meta("Company").has_field("default_warehouse"):
+        frappe.db.set_value("Company", company, "default_warehouse", almacen)
+    if frappe.get_meta("Stock Settings").has_field("default_warehouse"):
+        frappe.db.set_single_value("Stock Settings", "default_warehouse", almacen)
+
+
+def almacen_predeterminado(company=None):
+    """Almacén predeterminado del taller, en cualquier versión de ERPNext 16."""
+    company = company or frappe.defaults.get_user_default("Company") or frappe.defaults.get_global_default("company")
+    if company and frappe.get_meta("Company").has_field("default_warehouse"):
+        almacen = frappe.get_cached_value("Company", company, "default_warehouse")
+        if almacen:
+            return almacen
+    if frappe.get_meta("Stock Settings").has_field("default_warehouse"):
+        return frappe.db.get_single_value("Stock Settings", "default_warehouse")
+    return None
 
 
 def crear_centro_costo(company, abbr):

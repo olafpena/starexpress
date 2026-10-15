@@ -15,6 +15,8 @@
   "color",
   "version",
   "carroceria",
+  "numero_motor",
+  "transmision",
   "pais_fabricacion"
  ],
  "fields": [
@@ -89,10 +91,21 @@
    "fieldtype": "Data",
    "label": "País de fabricación",
    "read_only": 1
+  },
+  {
+   "fieldname": "numero_motor",
+   "label": "Número de motor",
+   "fieldtype": "Data"
+  },
+  {
+   "fieldname": "transmision",
+   "label": "Transmisión",
+   "fieldtype": "Select",
+   "options": "\nManual\nAutomática"
   }
  ],
  "links": [],
- "modified": "2026-10-04 22:00:00.000000",
+ "modified": "2026-10-15 22:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Vehiculo Taller",
