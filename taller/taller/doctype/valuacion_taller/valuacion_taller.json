@@ -390,7 +390,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-04 20:00:00.000000",
+ "modified": "2026-10-16 22:45:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Valuacion Taller",
@@ -418,7 +418,7 @@
  "autoname": "format:VAL-{YYYY}-{#####}",
  "naming_rule": "Expression",
  "title_field": "cliente_nombre",
- "show_title_field_in_link": 1,
+ "show_title_field_in_link": 0,
  "track_changes": 1,
  "search_fields": "orden_taller,numero_reclamo,placas"
 }

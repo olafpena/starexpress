@@ -83,7 +83,9 @@ def registrar_mano_obra(doc):
 
 def crear_timesheet(doc, tramo):
     tipo_actividad = actividad(tramo["paso"])
-    empleado = frappe.db.get_value("Employee", {"user_id": tramo["usuario"], "status": "Active"})
+    # El empleado del paso (editable en la tabla); si no hay, el del usuario que lo movió
+    empleado = tramo.get("empleado") or frappe.db.get_value(
+        "Employee", {"user_id": tramo["usuario"], "status": "Active"})
     ts = frappe.get_doc({
         "doctype": "Timesheet",
         "company": doc.company,

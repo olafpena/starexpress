@@ -19,13 +19,14 @@ from taller.flujo.configuracion import (
     DOCTYPE_VEHICULO,
     MOMENTO_RECEPCION,
     MOMENTO_RECOLECCION,
+    recolecta,
 )
 from taller.fotos import procesar_fotos
 
 # Datos que el inventario trae de la orden (además de los fetch_from del JSON,
 # que en el servidor solo corren al cambiar el Link)
 CAMPOS_DE_LA_ORDEN = ["tipo_orden", "tipo_flujo", "cliente", "cliente_nombre", "telefono", "email",
-                      "aseguradora", "direccion_recoleccion", "asesor_agencia", "orden_agencia",
+                      "aseguradora", "direccion_recoleccion",
                       "numero_siniestro", "vehiculo", "marca", "modelo", "anio", "color", "placas", "vin"]
 CAMPOS_AL_VEHICULO = ["numero_motor", "transmision"]
 
@@ -60,7 +61,7 @@ class Inventario(Document):
         for campo in CAMPOS_DE_LA_ORDEN:
             self.set(campo, orden.get(campo))
         if self.docstatus == 0:
-            self.momento = MOMENTO_RECOLECCION if orden.requiere_recoleccion else MOMENTO_RECEPCION
+            self.momento = MOMENTO_RECOLECCION if recolecta(orden) else MOMENTO_RECEPCION
         if self.vehiculo:
             vehiculo = frappe.db.get_value(DOCTYPE_VEHICULO, self.vehiculo, CAMPOS_AL_VEHICULO, as_dict=True) or {}
             for campo in CAMPOS_AL_VEHICULO:
@@ -127,7 +128,7 @@ def crear_inventario(orden):
         return orden.inventario
     inventario = frappe.new_doc(DOCTYPE_INVENTARIO)
     inventario.orden_taller = orden.name
-    inventario.momento = MOMENTO_RECOLECCION if orden.get("requiere_recoleccion") else MOMENTO_RECEPCION
+    inventario.momento = MOMENTO_RECOLECCION if recolecta(orden) else MOMENTO_RECEPCION
     for grupo, concepto in ACCESORIOS_INVENTARIO:
         inventario.append("accesorios", {"grupo": grupo, "concepto": concepto})
     inventario.insert(ignore_permissions=True)
@@ -139,7 +140,7 @@ def actualizar_momento(orden):
     """Si la orden cambia Requiere recolección, el inventario aún sin enviar cambia de momento."""
     if not orden.get("inventario"):
         return
-    momento = MOMENTO_RECOLECCION if orden.get("requiere_recoleccion") else MOMENTO_RECEPCION
+    momento = MOMENTO_RECOLECCION if recolecta(orden) else MOMENTO_RECEPCION
     actual = frappe.db.get_value(DOCTYPE_INVENTARIO, orden.inventario, ["docstatus", "momento"], as_dict=True)
     if actual and actual.docstatus == 0 and actual.momento != momento:
         frappe.db.set_value(DOCTYPE_INVENTARIO, orden.inventario, "momento", momento)

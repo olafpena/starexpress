@@ -7,9 +7,11 @@ llena expediente, vehículo, partidas y los totales del documento. Para aprobarl
 
 Particular: la misma forma con las partidas capturadas a mano.
 
+La orden liga su valuación (`valuacion`) desde que se crea, igual que el
+inventario; al cancelarla o borrarla la orden queda sin valuación.
+
 Al enviarla:
-  * la orden queda con `valuacion` y `valuacion_aprobada` (necesaria para
-    completar Recepción),
+  * la orden queda con `valuacion_aprobada` (necesaria para completar Recepción),
   * se llenan en la orden los datos vacíos del vehículo y, en Aseguradora,
     los del siniestro y la autorización,
   * las partidas pasan a los conceptos de la orden si aún no hay orden de venta.
@@ -69,10 +71,28 @@ class ValuacionTaller(Document):
     def on_submit(self):
         aplicar_a_orden(self)
 
+    def after_insert(self):
+        # Como el inventario: la orden muestra el link desde que la valuación existe. Cambia el
+        # modified de la orden para que un formulario abierto se recargue y no borre el link al guardar
+        frappe.db.set_value(DOCTYPE_ORDEN, self.orden_taller, {"valuacion": self.name, "valuacion_total": self.total})
+
+    def on_update(self):
+        # El total de la orden sigue al borrador mientras se captura
+        if frappe.db.get_value(DOCTYPE_ORDEN, self.orden_taller, "valuacion") == self.name:
+            frappe.db.set_value(DOCTYPE_ORDEN, self.orden_taller, "valuacion_total", self.total, update_modified=False)
+
     def on_cancel(self):
-        orden = frappe.db.get_value(DOCTYPE_ORDEN, self.orden_taller, ["valuacion"], as_dict=True)
-        if orden and orden.valuacion == self.name:
-            frappe.db.set_value(DOCTYPE_ORDEN, self.orden_taller, "valuacion_aprobada", 0)
+        self.desligar_de_la_orden()
+
+    def on_trash(self):
+        self.desligar_de_la_orden()
+
+    def desligar_de_la_orden(self):
+        if frappe.db.get_value(DOCTYPE_ORDEN, self.orden_taller, "valuacion") == self.name:
+            frappe.db.set_value(DOCTYPE_ORDEN, self.orden_taller,
+                                {"valuacion": None, "valuacion_aprobada": 0, "valuacion_total": 0})
+            # Sus conceptos quedan como capturados a mano hasta que se apruebe otra valuación
+            desligar_conceptos(self.orden_taller)
 
     def validar_unica(self):
         otra = frappe.db.get_value("Valuacion Taller", {
@@ -182,18 +202,68 @@ def aplicar_a_orden(val):
                         indicator="orange", alert=True)
     else:
         orden.set("conceptos", [])
-        for p in val.partidas:
-            if not flt(p.importe):
-                continue
-            cantidad = flt(p.cantidad) or 1
-            orden.append("conceptos", {
-                "item_code": p.item_code or ARTICULO_POR_TIPO[audatex.OTRO],
-                "descripcion": " ".join(filter(None, [p.descripcion, p.numero_pieza and f"({p.numero_pieza})"])),
-                "qty": cantidad,
-                "rate": flt(p.importe) / cantidad,
-            })
+        for p in partidas_cobrables(val):
+            orden.append("conceptos", concepto_de_partida(p))
 
     orden.save()
+
+
+def partidas_cobrables(val):
+    return [p for p in val.partidas if flt(p.importe)]
+
+
+def concepto_de_partida(p):
+    cantidad = flt(p.cantidad) or 1
+    return {
+        "item_code": p.item_code or ARTICULO_POR_TIPO[audatex.OTRO],
+        "descripcion": " ".join(filter(None, [p.descripcion, p.numero_pieza and f"({p.numero_pieza})"])),
+        "qty": cantidad,
+        "rate": flt(p.importe) / cantidad,
+        "de_valuacion": 1,
+        "partida_valuacion": p.name,
+    }
+
+
+CAMPOS_LIGADOS = ("item_code", "descripcion", "qty", "rate")
+
+
+def validar_conceptos_de_valuacion(orden):
+    """Los conceptos que vienen de la valuación aprobada no se cambian ni se quitan desde la orden.
+
+    Se pueden agregar otros (hallazgos, complementos). Para cambiar lo autorizado se
+    cancela y corrige la valuación; al aprobarse de nuevo reemplaza sus conceptos.
+    """
+    ligados = {c.partida_valuacion: c for c in orden.conceptos if c.partida_valuacion}
+    if not ligados:
+        return
+    if not (orden.valuacion and orden.valuacion_aprobada):
+        frappe.throw(_("Hay conceptos de una valuación que ya no está aprobada en la orden."))
+    val = frappe.get_doc("Valuacion Taller", orden.valuacion)
+    cambiados = []
+    for p in partidas_cobrables(val):
+        esperado = concepto_de_partida(p)
+        fila = ligados.pop(p.name, None)
+        if not fila:
+            cambiados.append(_("se quitó «{0}»").format(esperado["descripcion"] or esperado["item_code"]))
+            continue
+        fila.de_valuacion = 1
+        for campo in CAMPOS_LIGADOS:
+            actual, valor = fila.get(campo), esperado[campo]
+            igual = flt(actual, 2) == flt(valor, 2) if campo in ("qty", "rate") else (actual or "") == (valor or "")
+            if not igual:
+                cambiados.append(_("renglón {0}: cambió {1}").format(fila.idx, _(fila.meta.get_label(campo))))
+    for fila in ligados.values():
+        cambiados.append(_("renglón {0}: no es de la valuación {1}").format(fila.idx, val.name))
+    if cambiados:
+        frappe.throw(_("Los conceptos que vienen de la valuación no se pueden cambiar ni quitar ({0}). "
+                       "Para corregirlos cancela y corrige la valuación; los extras agrégalos en renglones nuevos.")
+                     .format("; ".join(cambiados)), title=_("Conceptos de la valuación"))
+
+
+def desligar_conceptos(orden_taller):
+    frappe.db.sql("""update `tabConcepto Orden Taller` set de_valuacion = 0, partida_valuacion = null
+                     where parenttype = %s and parent = %s and ifnull(partida_valuacion, '') != ''""",
+                  (DOCTYPE_ORDEN, orden_taller))
 
 
 def vehiculo_de(val, orden):

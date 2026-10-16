@@ -13,3 +13,8 @@ taller.patches.v0_9.flujo_mecanica
 taller.patches.v0_10.sin_redondeo_al_peso
 taller.patches.v0_11.estatus_orden
 taller.patches.v0_12.inventario_y_ambos
+taller.patches.v0_12.totales_de_horas
+taller.patches.v0_12.agencia_en_inventario
+taller.patches.v0_12.valuacion_ligada
+taller.patches.v0_12.danos_al_inventario
+taller.patches.v0_12.conceptos_de_valuacion

@@ -22,6 +22,7 @@ frappe.ui.form.on("Orden Taller", {
 	refresh(frm) {
 		frm.trigger("botones_erpnext");
 		frm.set_df_property("conceptos", "read_only", frm.doc.orden_venta ? 1 : 0);
+		bloquear_conceptos_de_valuacion(frm);
 		// La tabla de pasos la mantiene el servidor según el flujo (cannot_add_rows en el
 		// JSON no aplica: DocField de Frappe v16 no tiene esas propiedades)
 		frm.set_df_property("pasos", "cannot_add_rows", true);
@@ -49,7 +50,26 @@ frappe.ui.form.on("Orden Taller", {
 		taller_fotos.pintar(frm);
 	},
 	tipo_flujo(frm) {
+		frm.trigger("direccion_agencia");
 		frm.trigger("refresh");
+	},
+	cliente(frm) {
+		frm.trigger("direccion_agencia");
+	},
+	requiere_recoleccion(frm) {
+		frm.trigger("direccion_agencia");
+	},
+	// En Agencia la unidad se recoge en la agencia: su dirección registrada
+	direccion_agencia(frm) {
+		const doc = frm.doc;
+		if (doc.docstatus !== 0 || doc.tipo_flujo !== "Agencia" || !doc.cliente || !doc.requiere_recoleccion) return;
+		frappe.call({
+			method: "taller.taller.doctype.orden_taller.orden_taller.direccion_de_cliente",
+			args: { cliente: doc.cliente },
+			callback(r) {
+				if (r.message) frm.set_value("direccion_recoleccion", r.message);
+			},
+		});
 	},
 	estatus(frm) {
 		frm.trigger("refresh");
@@ -133,7 +153,7 @@ frappe.ui.form.on("Orden Taller", {
 		if (doc.inventario) {
 			frm.add_custom_button(__("Inventario"), () => frappe.set_route("Form", "Inventario", doc.inventario), __("Ver"));
 		}
-		if (!doc.valuacion_aprobada && doc.docstatus === 0 && TIPOS_CON_VALUACION.includes(doc.tipo_orden)) {
+		if (!doc.valuacion && doc.docstatus === 0 && TIPOS_CON_VALUACION.includes(doc.tipo_orden)) {
 			frm.add_custom_button(
 				__("Valuación"),
 				() => frappe.new_doc("Valuacion Taller", { orden_taller: doc.name }),
@@ -234,7 +254,25 @@ frappe.ui.form.on("Concepto Orden Taller", {
 	conceptos_remove(frm) {
 		calcular_subtotal(frm);
 	},
+	before_conceptos_remove(frm, cdt, cdn) {
+		if (locals[cdt][cdn].partida_valuacion) {
+			frappe.throw(__("Este concepto viene de la valuación: para quitarlo cancela y corrige la valuación."));
+		}
+	},
 });
+
+// Los conceptos que vienen de la valuación aprobada no se editan desde la orden (el
+// servidor también lo valida); los renglones agregados a mano sí.
+const CAMPOS_LIGADOS_A_VALUACION = ["item_code", "descripcion", "qty", "rate"];
+
+function bloquear_conceptos_de_valuacion(frm) {
+	(frm.doc.conceptos || []).forEach((fila) => {
+		CAMPOS_LIGADOS_A_VALUACION.forEach((campo) => {
+			frappe.meta.get_docfield("Concepto Orden Taller", campo, fila.name).read_only = fila.partida_valuacion ? 1 : 0;
+		});
+	});
+	frm.fields_dict.conceptos.grid.refresh();
+}
 
 function calcular_importe(frm, cdt, cdn) {
 	const fila = locals[cdt][cdn];
@@ -248,6 +286,17 @@ function calcular_subtotal(frm) {
 
 frappe.ui.form.on("Paso Orden Taller", {
 	horas_estimadas(frm) {
+		totalizar_horas(frm);
 		frm.trigger("dibujar_flujo");
 	},
+	horas_reales(frm) {
+		totalizar_horas(frm);
+	},
 });
+
+// Totales informativos debajo de la tabla de pasos (el servidor los recalcula al guardar)
+function totalizar_horas(frm) {
+	const pasos = frm.doc.pasos || [];
+	frm.set_value("total_horas_estimadas", pasos.reduce((t, p) => t + flt(p.horas_estimadas), 0));
+	frm.set_value("total_horas_reales", pasos.reduce((t, p) => t + flt(p.horas_reales), 0));
+}

@@ -20,9 +20,7 @@
   "aseguradora",
   "col_cliente",
   "direccion_recoleccion",
-  "asesor_agencia",
   "telefono_contacto",
-  "orden_agencia",
   "numero_siniestro",
   "sec_levanta",
   "levantado_por",
@@ -62,9 +60,11 @@
   "observaciones",
   "sec_firmas",
   "nombre_entrega",
+  "asesor_agencia",
   "firma_entrega",
   "fecha_firma_entrega",
   "col_firmas",
+  "orden_agencia",
   "firma_recibe",
   "fecha_firma_recibe",
   "sec_recepcion",
@@ -190,24 +190,10 @@
    "depends_on": "eval:doc.momento==\"Recolección\""
   },
   {
-   "fieldname": "asesor_agencia",
-   "fieldtype": "Data",
-   "label": "Contacto en la agencia",
-   "fetch_from": "orden_taller.asesor_agencia",
-   "read_only": 1
-  },
-  {
    "fieldname": "telefono_contacto",
    "fieldtype": "Data",
    "label": "Teléfono del contacto",
    "options": "Phone"
-  },
-  {
-   "fieldname": "orden_agencia",
-   "fieldtype": "Data",
-   "label": "Orden de la agencia",
-   "fetch_from": "orden_taller.orden_agencia",
-   "read_only": 1
   },
   {
    "fieldname": "numero_siniestro",
@@ -440,6 +426,14 @@
    "label": "Entrega (agencia o cliente)"
   },
   {
+   "fieldname": "asesor_agencia",
+   "fieldtype": "Data",
+   "label": "Asesor de la agencia",
+   "depends_on": "eval:doc.tipo_flujo=='Agencia'",
+   "allow_on_submit": 1,
+   "description": "Quien entrega la unidad por parte de la agencia."
+  },
+  {
    "fieldname": "firma_entrega",
    "fieldtype": "Signature",
    "label": "Firma de quien entrega"
@@ -452,6 +446,14 @@
   {
    "fieldname": "col_firmas",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "orden_agencia",
+   "fieldtype": "Data",
+   "label": "Orden de la agencia",
+   "depends_on": "eval:doc.tipo_flujo=='Agencia'",
+   "allow_on_submit": 1,
+   "description": "Se pide antes de pasar la orden a Carrocería; se puede capturar con el inventario ya enviado."
   },
   {
    "fieldname": "firma_recibe",
@@ -505,7 +507,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-15 22:00:00.000000",
+ "modified": "2026-10-16 22:10:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Inventario",

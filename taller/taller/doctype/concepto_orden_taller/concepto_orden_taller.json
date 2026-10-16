@@ -10,7 +10,9 @@
   "qty",
   "uom",
   "rate",
-  "amount"
+  "amount",
+  "de_valuacion",
+  "partida_valuacion"
  ],
  "fields": [
   {
@@ -70,10 +72,28 @@
    "read_only": 1,
    "in_list_view": 1,
    "columns": 2
+  },
+  {
+   "fieldname": "de_valuacion",
+   "label": "Valuación",
+   "fieldtype": "Check",
+   "read_only": 1,
+   "no_copy": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "description": "Viene de la valuación aprobada: no se cambia ni se quita desde la orden."
+  },
+  {
+   "fieldname": "partida_valuacion",
+   "label": "Partida de valuación",
+   "fieldtype": "Data",
+   "read_only": 1,
+   "no_copy": 1,
+   "hidden": 1
   }
  ],
  "links": [],
- "modified": "2026-10-04 20:00:00.000000",
+ "modified": "2026-10-16 23:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Concepto Orden Taller",

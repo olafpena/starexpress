@@ -73,7 +73,8 @@ def cliente(nombre, grupo="Particular"):
 
 def orden(inventario=True, **campos):
     """Orden nueva; con inventario=True además levanta y envía su inventario."""
-    datos = {"doctype": "Orden Taller", "tipo_orden": HYP, "tipo_flujo": "Particular"}
+    # Sin recolección salvo que el caso la pida (en el formulario viene activada por omisión)
+    datos = {"doctype": "Orden Taller", "tipo_orden": HYP, "tipo_flujo": "Particular", "requiere_recoleccion": 0}
     datos.update(campos)
     if "cliente" not in datos:
         datos["cliente"] = cliente("Cliente")
@@ -311,6 +312,11 @@ def mecanica_flujo_completo_con_contabilidad():
     o = avanza(o, "Completar", "Enviar a Facturación", "Completar")
     verifica(o.workflow_state == "Facturación - Completado" and o.docstatus == 1, f"final {o.workflow_state}")
     verifica(o.estatus == conf.ESTATUS_TERMINADO, f"estatus al terminar Mecánica: {o.estatus}")
+    fila = next(f for f in o.pasos if f.paso == "Reparación")
+    fila.horas_reales = flt(fila.horas_reales) + 1
+    o.save()  # orden terminada: horas corregidas y totales recalculados
+    verifica(flt(frappe.db.get_value(conf.DOCTYPE, o.name, "total_horas_reales"))
+             == flt(sum(flt(f.horas_reales) for f in o.pasos), 2), "el total de horas reales no se recalculó tras enviar")
     verifica(frappe.db.get_value("Project", o.proyecto, "status") == "Completed", "proyecto sin cerrar")
     verifica(flt(o.costo_mano_obra) >= 450 and flt(o.costo_materiales) == 200,
              f"costeo: mano de obra {o.costo_mano_obra}, materiales {o.costo_materiales}")
@@ -684,10 +690,161 @@ def zonas_y_fotos_de_la_orden():
     f = o.fotos[0]
     verifica(f.imagen.startswith("/private/") and f.miniatura and f.etapa == "Recepción" and f.paso == "Recepción",
              f"foto de la orden: {f.imagen} {f.miniatura} {f.etapa} {f.paso}")
+    orden_campos = [c.fieldname for c in frappe.get_meta(conf.DOCTYPE).fields]
+    verifica(orden_campos.index("sec_calidad") < orden_campos.index("fotos") < orden_campos.index("sec_factura"),
+             "las fotos de la orden deben estar en Calidad y entrega")
     grande = frappe.get_doc("File", {"file_url": f.imagen})
     verifica(grande.is_private, "el File de la foto debe ser privado")
     verifica(len(original) > fotos_unidad.LIMITE_BYTES and grande.file_size < len(original) / 2,
              f"la foto grande no se optimizó: {len(original)} -> {grande.file_size} bytes")
+
+
+def empleado(nombre, usuario=None):
+    return frappe.get_doc({"doctype": "Employee", "first_name": f"REG {nombre}", "gender": "Male",
+                           "date_of_birth": "1990-01-01", "date_of_joining": "2020-01-01", "status": "Active",
+                           "company": frappe.defaults.get_global_default("company"), "user_id": usuario}).insert().name
+
+
+@caso
+def recoleccion_por_omision_y_direccion_de_agencia():
+    verifica(frappe.new_doc(conf.DOCTYPE).requiere_recoleccion == 1, "Requiere recolección debe venir activado")
+    agencia = cliente("Agencia Dirección", "Agencia")
+    frappe.get_doc({"doctype": "Address", "address_title": "REG Agencia", "address_type": "Billing",
+                    "address_line1": "Av. Reforma 100", "city": "CDMX", "country": "Mexico",
+                    "is_primary_address": 1, "links": [{"link_doctype": "Customer", "link_name": agencia}]}).insert()
+    o = orden(tipo_flujo="Agencia", cliente=agencia, requiere_recoleccion=1, inventario=False)
+    verifica("Av. Reforma 100" in (o.direccion_recoleccion or ""), f"dirección de recolección: {o.direccion_recoleccion!r}")
+    verifica(frappe.db.get_value(conf.DOCTYPE_INVENTARIO, o.inventario, "momento") == conf.MOMENTO_RECOLECCION,
+             "el inventario de una orden con recolección se levanta en Recolección")
+    a_mano = orden(tipo_flujo="Agencia", cliente=agencia, requiere_recoleccion=1, inventario=False,
+                   direccion_recoleccion="Patio de la agencia, puerta 3")
+    verifica(a_mano.direccion_recoleccion == "Patio de la agencia, puerta 3", "no debe pisar una dirección capturada")
+    particular = orden(requiere_recoleccion=1, inventario=False)
+    verifica(not particular.direccion_recoleccion, "en Particular la dirección no se llena sola")
+    mec = orden(tipo_orden=MECANICA, requiere_recoleccion=1, inventario=False)
+    verifica(frappe.db.get_value(conf.DOCTYPE_INVENTARIO, mec.inventario, "momento") == conf.MOMENTO_RECEPCION,
+             "Mecánica no tiene Recolección: su inventario es de Recepción")
+    mec = avanza(mec, "Enviar a Recepción")
+    verifica(mec.workflow_state == "Recepción - En Proceso", mec.workflow_state)
+
+
+@caso
+def pasos_con_empleado_y_horas_editables():
+    yo = empleado("Asesor", "Administrator")
+    pintor = empleado("Pintor")
+    o = avanza(orden(placas="REG40"), "Enviar a Recepción")
+    fila = next(f for f in o.pasos if f.paso == "Recepción")
+    verifica(fila.empleado == yo, f"empleado del paso {fila.empleado}, esperado {yo}")
+    retrocede_inicio(o, "Recepción", 2)
+    next(f for f in o.pasos if f.paso == "Recepción").empleado = pintor
+    o.save()
+    valuacion_manual(o)
+    o = avanza(o, "Completar")
+    fila = next(f for f in o.pasos if f.paso == "Recepción")
+    verifica(fila.empleado == pintor and flt(fila.horas_reales) >= 1.9, f"paso: {fila.empleado} {fila.horas_reales}")
+    empleados = frappe.get_all("Timesheet", filters={"parent_project": o.proyecto, "docstatus": 1}, pluck="employee")
+    verifica(pintor in empleados, f"el Timesheet debe ir al empleado del paso: {empleados}")
+    fila.horas_reales = 3.5
+    o.save()
+    verifica(flt(frappe.db.get_value("Paso Orden Taller", fila.name, "horas_reales")) == 3.5, "horas reales no editables")
+    verifica(flt(o.total_horas_reales) == flt(sum(flt(f.horas_reales) for f in o.pasos), 2) >= 3.5
+             and flt(o.total_horas_estimadas) == flt(sum(flt(f.horas_estimadas) for f in o.pasos), 2) > 0,
+             f"totales de horas {o.total_horas_estimadas} / {o.total_horas_reales}")
+    fila = next(f for f in o.pasos if f.paso == "Recepción")
+    fila.horas_reales = -1
+    bloquea(lambda: o.save(), "negativas")
+    campos = {f.fieldname: f for f in frappe.get_meta("Paso Orden Taller").fields}
+    verifica(campos["empleado"].in_list_view and not campos["usuario"].in_list_view and not campos["horas_reales"].read_only,
+             "la tabla debe mostrar Empleado (no Usuario) y dejar editar las horas reales")
+
+
+
+@caso
+def agencia_en_inventario_y_empleado_por_nombre():
+    orden_meta = frappe.get_meta(conf.DOCTYPE)
+    verifica(not any(orden_meta.has_field(c) for c in ("sec_agencia", "orden_agencia", "asesor_agencia", "descripcion_danos")),
+             "la Orden Taller ya no lleva la sección Agencia ni la descripción de daños")
+    meta = frappe.get_meta(conf.DOCTYPE_INVENTARIO)
+    campos = [f.fieldname for f in meta.fields]
+    firmas = campos[campos.index("sec_firmas"):campos.index("sec_recepcion")]
+    verifica({"orden_agencia", "asesor_agencia"} <= set(firmas), f"campos de Firmas y conformidad: {firmas}")
+    verifica(all(not meta.get_field(c).read_only and meta.get_field(c).allow_on_submit
+                 for c in ("orden_agencia", "asesor_agencia")), "los campos de agencia deben capturarse en el inventario")
+
+    o = orden(tipo_flujo="Agencia", cliente=cliente("Agencia Inventario", "Agencia"), placas="REG50", inventario=False)
+    inv = levantar_inventario(o, asesor_agencia="Asesor REG")
+    o.reload()
+    valuacion_manual(o)
+    o = avanza(o, "Enviar a Recepción", "Completar")
+    bloquea(lambda: avanza(o, "Enviar a Carrocería"), "orden de la agencia")
+    inv.reload()
+    inv.orden_agencia = "AG-123"
+    inv.save()
+    o.reload()
+    o = avanza(o, "Enviar a Carrocería")
+    verifica(o.workflow_state == "Carrocería - En Proceso", o.workflow_state)
+    verifica(frappe.db.get_value(conf.DOCTYPE_INVENTARIO, inv.name, "asesor_agencia") == "Asesor REG", "asesor de la agencia")
+
+    verifica(frappe.get_meta("Employee").show_title_field_in_link, "los Link a Employee deben mostrar el nombre")
+    pintor = empleado("Nombre Apellido")
+    titulo = frappe.db.get_value("Employee", pintor, "employee_name")
+    verifica(titulo == "REG Nombre Apellido", f"nombre del empleado {titulo}")
+
+
+
+@caso
+def valuacion_ligada_desde_que_se_crea():
+    o = orden(placas="REG60")
+    v = frappe.get_doc({"doctype": "Valuacion Taller", "orden_taller": o.name, "origen": "Captura manual",
+                        "partidas": [{"tipo": "Otro", "descripcion": "Lavado", "cantidad": 1, "precio_unitario": 250}]}).insert()
+    o.reload()
+    verifica(o.valuacion == v.name and not o.valuacion_aprobada and flt(o.valuacion_total) == flt(v.total) > 0,
+             f"borrador: {o.valuacion} aprobada={o.valuacion_aprobada} total={o.valuacion_total}")
+    v.delete()
+    verifica(not frappe.db.get_value(conf.DOCTYPE, o.name, "valuacion"), "al borrar la valuación la orden queda sin link")
+    v = valuacion_manual(o)
+    verifica(o.valuacion == v.name and o.valuacion_aprobada and flt(o.valuacion_total) == flt(v.total),
+             f"enviada: {o.valuacion} aprobada={o.valuacion_aprobada} total={o.valuacion_total}/{v.total}")
+    v.cancel()
+    o.reload()
+    verifica(not o.valuacion and not o.valuacion_aprobada, f"cancelada: {o.valuacion} aprobada={o.valuacion_aprobada}")
+    meta = frappe.get_meta(conf.DOCTYPE)
+    verifica(meta.get_field("valuacion").fieldtype == "Link" and meta.get_field("inventario").fieldtype == "Link",
+             "valuación e inventario son links")
+
+
+
+@caso
+def conceptos_ligados_a_la_valuacion():
+    from taller.patches.v0_12 import conceptos_de_valuacion
+
+    o = orden(placas="REG70")
+    v = valuacion_manual(o)
+    partidas = {p.name for p in v.partidas}
+    verifica(len(o.conceptos) == 2 and all(c.de_valuacion and c.partida_valuacion in partidas for c in o.conceptos),
+             f"conceptos de la valuación: {[(c.de_valuacion, c.partida_valuacion) for c in o.conceptos]}")
+    o.conceptos[0].rate = flt(o.conceptos[0].rate) + 10
+    bloquea(lambda: o.save(), "no se pueden cambiar")
+    o.reload()
+    o.remove(o.conceptos[1])
+    bloquea(lambda: o.save(), "se quitó")
+    o.reload()
+    o.append("conceptos", {"item_code": "SRV-LAV", "qty": 1, "descripcion": "Hallazgo"})
+    o.save()
+    verifica(len(o.conceptos) == 3 and not o.conceptos[2].de_valuacion, "los extras se agregan sin ligar")
+
+    # El parche liga los conceptos de órdenes anteriores si no se editaron
+    frappe.db.sql("""update `tabConcepto Orden Taller` set de_valuacion = 0, partida_valuacion = null
+                     where parent = %s""", o.name)
+    conceptos_de_valuacion.execute()
+    o.reload()
+    verifica([c.de_valuacion for c in o.conceptos] == [1, 1, 0], f"parche: {[c.de_valuacion for c in o.conceptos]}")
+
+    v.cancel()
+    o.reload()
+    verifica(not any(c.de_valuacion or c.partida_valuacion for c in o.conceptos), "al cancelar la valuación se desligan")
+    o.conceptos[0].rate = 100
+    o.save()
 
 
 def valuacion_audatex(pdf):

@@ -39,6 +39,8 @@ SEPARADOR = " - "
 NOMBRE_WORKFLOW = "Flujo Hojalatería y Pintura"
 DOCTYPE = "Orden Taller"
 DOCTYPE_REGLAS = "Regla Transicion Taller"
+# La orden y el asesor de la agencia se capturan en el inventario (Firmas y conformidad)
+CONDICION_ORDEN_AGENCIA = "inventario and inventario.orden_agencia"
 DOCTYPE_VEHICULO = "Vehiculo Taller"
 DOCTYPE_VALUACION = "Valuacion Taller"
 DOCTYPE_ESTATUS = "Estatus Orden Taller"
@@ -282,6 +284,12 @@ def tipo_orden_de(doc):
 def secuencia(tipo_orden, tipo_flujo):
     """Pasos de la orden según su tipo de orden y tipo de flujo ([] si no hay)."""
     return list(FLUJOS_POR_ORDEN.get(tipo_orden or TIPO_ORDEN_FLUJO, {}).get(tipo_flujo) or [])
+
+
+def recolecta(doc):
+    """True si la orden pide recolección y su secuencia tiene el paso Recolección (Mecánica no)."""
+    return bool(doc.get("requiere_recoleccion")) and PASO_RECOLECCION in secuencia(
+        tipo_orden_de(doc), doc.get("tipo_flujo"))
 
 
 def usa_flujo(doc):
@@ -559,8 +567,8 @@ REGLAS_EJEMPLO = [
         "descripcion": "Agencia: orden de la agencia antes de Carrocería",
         "tipo_orden": TIPO_ORDEN_FLUJO,
         "tipo_flujo": "Agencia", "paso": "Carrocería",
-        "condicion": "doc.orden_agencia",
-        "mensaje": "Captura el número de orden de la agencia antes de pasar a Carrocería.",
+        "condicion": CONDICION_ORDEN_AGENCIA,
+        "mensaje": "Captura en el inventario el número de orden de la agencia antes de pasar a Carrocería.",
     },
     {
         "descripcion": "Particular: presupuesto aprobado antes de Carrocería",
@@ -616,10 +624,11 @@ REGLAS_EJEMPLO = [
 def instalar(reconstruir=False):
     import frappe
 
-    from taller.erp.documentos import crear_campos_personalizados
+    from taller.erp.documentos import crear_campos_personalizados, crear_propiedades
 
     validar_configuracion()
     crear_campos_personalizados()
+    crear_propiedades()
     crear_estatus()
     crear_roles()
     crear_estados_workflow()

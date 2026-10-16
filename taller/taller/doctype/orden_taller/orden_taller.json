@@ -24,6 +24,10 @@
   "sec_flujo",
   "flujo_html",
   "pasos",
+  "sec_horas",
+  "total_horas_estimadas",
+  "col_horas",
+  "total_horas_reales",
   "sec_vehiculo",
   "vehiculo",
   "marca",
@@ -33,14 +37,10 @@
   "color",
   "placas",
   "vin",
-  "descripcion_danos",
   "sec_inventario",
   "inventario",
   "col_inventario",
   "kilometraje",
-  "sec_fotos",
-  "fotos_html",
-  "fotos",
   "sec_mecanica",
   "diagnostico",
   "col_mecanica",
@@ -53,10 +53,6 @@
   "sec_conceptos",
   "conceptos",
   "subtotal",
-  "sec_agencia",
-  "orden_agencia",
-  "col_agencia",
-  "asesor_agencia",
   "sec_aseguradora",
   "aseguradora",
   "numero_siniestro",
@@ -89,6 +85,9 @@
   "fecha_entrega",
   "recibido_por",
   "firma_entrega",
+  "sec_fotos",
+  "fotos_html",
+  "fotos",
   "sec_factura",
   "folio_factura",
   "col_factura",
@@ -279,11 +278,6 @@
    "label": "VIN / Número de serie"
   },
   {
-   "fieldname": "descripcion_danos",
-   "fieldtype": "Text",
-   "label": "Descripción de daños"
-  },
-  {
    "depends_on": "eval:[\"Mecánica\",\"Ambos\"].includes(doc.tipo_orden)",
    "fieldname": "sec_mecanica",
    "fieldtype": "Section Break",
@@ -359,26 +353,6 @@
    "fieldtype": "Currency",
    "label": "Subtotal (sin IVA)",
    "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.tipo_flujo=='Agencia'",
-   "fieldname": "sec_agencia",
-   "fieldtype": "Section Break",
-   "label": "Agencia"
-  },
-  {
-   "fieldname": "orden_agencia",
-   "fieldtype": "Data",
-   "label": "Orden de la agencia"
-  },
-  {
-   "fieldname": "col_agencia",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "asesor_agencia",
-   "fieldtype": "Data",
-   "label": "Asesor de la agencia"
   },
   {
    "depends_on": "eval:doc.tipo_flujo=='Aseguradora'",
@@ -716,13 +690,16 @@
    "fieldname": "requiere_recoleccion",
    "fieldtype": "Check",
    "label": "Requiere recolección",
-   "description": "La unidad se recoge en la agencia o con el cliente: el inventario se levanta en Recolección."
+   "description": "La unidad se recoge en la agencia o con el cliente: el inventario se levanta en Recolección.",
+   "default": "1",
+   "depends_on": "eval:doc.tipo_orden!=\"Mecánica\""
   },
   {
    "fieldname": "direccion_recoleccion",
    "fieldtype": "Small Text",
    "label": "Dirección de recolección",
-   "depends_on": "eval:doc.requiere_recoleccion"
+   "depends_on": "eval:doc.requiere_recoleccion && doc.tipo_orden!=\"Mecánica\"",
+   "description": "En Agencia se llena con la dirección registrada de la agencia."
   },
   {
    "fieldname": "sec_inventario",
@@ -750,31 +727,56 @@
   },
   {
    "fieldname": "sec_fotos",
-   "fieldtype": "Section Break",
-   "label": "Fotos",
-   "collapsible": 1
+   "fieldtype": "Section Break"
   },
   {
    "fieldname": "fotos_html",
    "fieldtype": "HTML",
-   "label": "Visor"
+   "label": "Visor de fotos"
   },
   {
    "fieldname": "fotos",
    "fieldtype": "Table",
-   "label": "Fotos",
+   "label": "Fotos de calidad y entrega",
    "options": "Foto Orden Taller",
-   "allow_on_submit": 1
+   "allow_on_submit": 1,
+   "description": "Soporte de la entrega: el estado en que sale la unidad después del control de calidad."
   },
   {
    "fieldname": "firma_entrega",
    "fieldtype": "Signature",
    "label": "Firma de quien recibe la unidad"
+  },
+  {
+   "fieldname": "sec_horas",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "total_horas_estimadas",
+   "fieldtype": "Float",
+   "label": "Total hrs estimadas",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "2",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "col_horas",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_horas_reales",
+   "fieldtype": "Float",
+   "label": "Total hrs reales",
+   "read_only": 1,
+   "allow_on_submit": 1,
+   "precision": "2",
+   "no_copy": 1
   }
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-15 22:00:00.000000",
+ "modified": "2026-10-16 22:50:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Orden Taller",

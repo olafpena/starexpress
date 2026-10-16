@@ -46,6 +46,14 @@ def crear_campos_personalizados():
     create_custom_fields(CAMPOS_PERSONALIZADOS, update=True)
 
 
+def crear_propiedades():
+    """Los Link a Employee (como el Empleado de los pasos) muestran el nombre y apellido en vez del ID."""
+    from frappe.custom.doctype.property_setter.property_setter import make_property_setter
+
+    make_property_setter("Employee", None, "show_title_field_in_link", 1, "Check", for_doctype=True,
+                         validate_fields_for_doctype=False)
+
+
 # ==========================================================================
 # Datos de la orden
 # ==========================================================================

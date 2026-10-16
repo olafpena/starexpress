@@ -77,6 +77,19 @@ def validar_inventario(doc):
                  .format(enlace, paso_de_estado(destino)), title=_("Falta el inventario"))
 
 
+def validar_horas(doc):
+    for fila in doc.get(CAMPO_PASOS) or []:
+        if flt(fila.horas_reales) < 0 or flt(fila.horas_estimadas) < 0:
+            frappe.throw(_("Las horas del paso {0} no pueden ser negativas.").format(fila.paso))
+
+
+def totalizar_horas(doc):
+    """Totales informativos debajo de la tabla de pasos."""
+    filas = doc.get(CAMPO_PASOS) or []
+    doc.total_horas_estimadas = flt(sum(flt(f.horas_estimadas) for f in filas), 2)
+    doc.total_horas_reales = flt(sum(flt(f.horas_reales) for f in filas), 2)
+
+
 def generar_pasos(doc):
     doc.set(CAMPO_PASOS, [])
     for paso in secuencia(tipo_orden_de(doc), doc.tipo_flujo):
@@ -125,6 +138,15 @@ def _marcar(fila, estado, ahora, usuario):
     fila.fecha_hora = ahora
     if estado == EN_PROCESO:
         fila.inicio = ahora
+        # El empleado que hace el paso; si ya se capturó a mano, se respeta
+        fila.empleado = fila.empleado or empleado_de(usuario)
+
+
+def empleado_de(usuario):
+    """Empleado activo ligado al usuario (campo User ID del Employee), o None."""
+    if not usuario:
+        return None
+    return frappe.db.get_value("Employee", {"user_id": usuario, "status": "Active"})
 
 
 def _cerrar(fila, ahora):
@@ -140,7 +162,7 @@ def _cerrar(fila, ahora):
         if orden is not None:
             orden.flags.setdefault("tramos_mano_obra", []).append({
                 "paso": fila.paso, "inicio": get_datetime(fila.inicio), "fin": ahora,
-                "horas": horas, "usuario": frappe.session.user,
+                "horas": horas, "usuario": frappe.session.user, "empleado": fila.get("empleado"),
             })
     fila.inicio = None
 
@@ -148,4 +170,5 @@ def _cerrar(fila, ahora):
 def _limpiar(fila):
     fila.estado = None
     fila.usuario = None
+    fila.empleado = None
     fila.fecha_hora = None

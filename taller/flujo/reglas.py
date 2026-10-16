@@ -19,6 +19,7 @@ La condición es una expresión Python evaluada con safe_eval. Variables:
   anterior  -> la orden antes de guardar (None si es nueva)
   origen    -> estado anterior (str o None)
   destino   -> estado nuevo (str)
+  inventario -> el inventario de la orden (dict con sus campos) o None
   frappe.db.get_value, frappe.utils, etc. (globals seguros de Frappe)
 
 Si la condición es falsa:
@@ -32,6 +33,7 @@ from frappe.utils.safe_exec import safe_eval
 
 from taller.flujo.configuracion import (
     CAMPO_ESTADO,
+    DOCTYPE_INVENTARIO,
     DOCTYPE_REGLAS,
     TIPOS_DE_REGLAS,
     paso_de_estado,
@@ -47,10 +49,13 @@ def validar_reglas_transicion(doc):
         return
 
     bloqueos, advertencias = [], []
+    inventario = None
     for regla in obtener_reglas(doc.get("tipo_flujo"), tipo_orden_de(doc)):
         if not aplica(regla, origen, destino):
             continue
-        if evaluar(regla, doc, anterior, origen, destino):
+        if inventario is None:
+            inventario = inventario_de(doc)
+        if evaluar(regla, doc, anterior, origen, destino, inventario or None):
             continue
         destino_lista = bloqueos if regla.tipo_regla == "Bloquear" else advertencias
         destino_lista.append(regla.mensaje)
@@ -82,8 +87,16 @@ def aplica(regla, origen, destino):
     return regla.paso in (None, "", "Todos") or regla.paso == paso_de_estado(destino)
 
 
-def evaluar(regla, doc, anterior, origen, destino):
-    contexto = {"doc": doc, "anterior": anterior, "origen": origen, "destino": destino}
+def inventario_de(doc):
+    """Campos del inventario vigente de la orden; {} si no tiene."""
+    if not doc.get("inventario"):
+        return {}
+    return frappe.db.get_value(DOCTYPE_INVENTARIO, doc.inventario, "*", as_dict=True) or {}
+
+
+def evaluar(regla, doc, anterior, origen, destino, inventario=None):
+    contexto = {"doc": doc, "anterior": anterior, "origen": origen, "destino": destino,
+                "inventario": inventario}
     try:
         return bool(safe_eval(regla.condicion, None, contexto))
     except Exception as e:
