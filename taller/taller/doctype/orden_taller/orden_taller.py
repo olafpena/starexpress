@@ -12,21 +12,20 @@ from taller.erp.costeo import (
     registrar_mano_obra,
 )
 from taller.erp.documentos import calcular_conceptos, calcular_montos
-from taller.flujo.configuracion import CAMPO_TIPO_ORDEN, ESTADO_INICIAL, recolecta
+from taller.flujo.configuracion import CAMPO_TIPO_ORDEN, DOCTYPE_INVENTARIO, ESTADO_INICIAL, recolecta
 from taller.flujo.estatus import sincronizar_estatus
 from taller.flujo.pasos import sincronizar_pasos, totalizar_horas, validar_horas, validar_inventario
 from taller.flujo.reglas import validar_reglas_transicion
 from taller.fotos import procesar_fotos
-from taller.taller.doctype.inventario.inventario import actualizar_momento, crear_inventario
+from taller.taller.doctype.inventario.inventario import CAMPOS_A_LA_ORDEN, actualizar_momento, crear_inventario
 from taller.taller.doctype.valuacion_taller.valuacion_taller import validar_conceptos_de_valuacion
-from taller.vehiculo.vin import revisar_vin
 
 
 class OrdenTaller(Document):
     def validate(self):
         self.company = self.company or frappe.defaults.get_user_default("Company")
         self.validar_cambio_tipo_orden()
-        revisar_vin(self)
+        self.traer_vehiculo_del_inventario()
         self.llenar_direccion_recoleccion()
         validar_horas(self)
         validar_conceptos_de_valuacion(self)
@@ -52,6 +51,11 @@ class OrdenTaller(Document):
                 and anterior.workflow_state not in (None, "", ESTADO_INICIAL)):
             frappe.throw(_("El tipo de orden solo se puede cambiar mientras la orden está en {0}.")
                          .format(ESTADO_INICIAL))
+
+    def traer_vehiculo_del_inventario(self):
+        """El vehículo se captura en el inventario; la orden guarda su copia (lista, filtros, búsqueda)."""
+        if self.inventario:
+            self.update(frappe.db.get_value(DOCTYPE_INVENTARIO, self.inventario, CAMPOS_A_LA_ORDEN, as_dict=True) or {})
 
     def llenar_direccion_recoleccion(self):
         """En Agencia, la recolección es en la agencia: su dirección registrada, si no se capturó otra."""

@@ -1,5 +1,12 @@
-// Inventario de la unidad. El visor de fotos viene de public/js/fotos.js (hooks.py).
+// Inventario de la unidad. El visor de fotos viene de public/js/fotos.js y el VIN de
+// public/js/vin.js (hooks.py).
 frappe.ui.form.on("Inventario", {
+	setup(frm) {
+		// En Agencia el cliente es la agencia, no el dueño del vehículo: sin filtro
+		frm.set_query("vehiculo", () => ({
+			filters: frm.doc.cliente && frm.doc.tipo_flujo !== "Agencia" ? { cliente: frm.doc.cliente } : {},
+		}));
+	},
 	refresh(frm) {
 		taller_fotos.pintar(frm);
 		if (frm.doc.orden_taller) {
@@ -18,6 +25,13 @@ frappe.ui.form.on("Inventario", {
 	},
 	momento(frm) {
 		frm.trigger("refresh");
+	},
+	// La fecha de cada firma es el momento en que se firma
+	firma_entrega(frm) {
+		if (frm.doc.firma_entrega) frm.set_value("fecha_firma_entrega", frappe.datetime.now_datetime());
+	},
+	firma_recibe(frm) {
+		if (frm.doc.firma_recibe) frm.set_value("fecha_firma_recibe", frappe.datetime.now_datetime());
 	},
 });
 

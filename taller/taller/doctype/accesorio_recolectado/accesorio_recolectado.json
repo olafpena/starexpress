@@ -32,6 +32,7 @@
    "fieldtype": "Select",
    "label": "Estado",
    "options": "\nSí\nNo\nN/A",
+   "default": "Sí",
    "in_list_view": 1,
    "columns": 1
   },
@@ -44,7 +45,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-15 22:00:00.000000",
+ "modified": "2026-10-27 22:40:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Accesorio Recolectado",

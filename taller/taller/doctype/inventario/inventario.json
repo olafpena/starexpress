@@ -242,29 +242,28 @@
    "fieldtype": "Link",
    "label": "Vehículo",
    "options": "Vehiculo Taller",
-   "fetch_from": "orden_taller.vehiculo",
-   "read_only": 1
+   "description": "Elige uno registrado; sus datos llenan los campos vacíos."
   },
   {
    "fieldname": "marca",
    "fieldtype": "Data",
    "label": "Marca",
-   "fetch_from": "orden_taller.marca",
-   "read_only": 1
+   "fetch_from": "vehiculo.marca",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "modelo",
    "fieldtype": "Data",
    "label": "Modelo",
-   "fetch_from": "orden_taller.modelo",
-   "read_only": 1
+   "fetch_from": "vehiculo.modelo",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "anio",
    "fieldtype": "Int",
    "label": "Año",
-   "fetch_from": "orden_taller.anio",
-   "read_only": 1
+   "fetch_from": "vehiculo.anio",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "col_vehiculo",
@@ -274,23 +273,23 @@
    "fieldname": "color",
    "fieldtype": "Data",
    "label": "Color",
-   "fetch_from": "orden_taller.color",
-   "read_only": 1
+   "fetch_from": "vehiculo.color",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "placas",
    "fieldtype": "Data",
    "label": "Placas",
-   "fetch_from": "orden_taller.placas",
-   "read_only": 1,
-   "in_list_view": 1
+   "fetch_from": "vehiculo.placas",
+   "in_list_view": 1,
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "vin",
    "fieldtype": "Data",
    "label": "VIN / Número de serie",
-   "fetch_from": "orden_taller.vin",
-   "read_only": 1
+   "fetch_from": "vehiculo.vin",
+   "fetch_if_empty": 1
   },
   {
    "fieldname": "numero_motor",
@@ -327,7 +326,8 @@
   {
    "fieldname": "enciende",
    "fieldtype": "Check",
-   "label": "Enciende"
+   "label": "Enciende",
+   "default": "1"
   },
   {
    "fieldname": "col_estado",
@@ -441,7 +441,8 @@
   {
    "fieldname": "fecha_firma_entrega",
    "fieldtype": "Datetime",
-   "label": "Fecha y hora"
+   "label": "Fecha y hora",
+   "default": "Now"
   },
   {
    "fieldname": "col_firmas",
@@ -463,7 +464,8 @@
   {
    "fieldname": "fecha_firma_recibe",
    "fieldtype": "Datetime",
-   "label": "Fecha y hora"
+   "label": "Fecha y hora",
+   "default": "Now"
   },
   {
    "fieldname": "sec_recepcion",
@@ -507,7 +509,7 @@
   }
  ],
  "links": [],
- "modified": "2026-10-16 22:10:00.000000",
+ "modified": "2026-10-27 23:40:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Inventario",

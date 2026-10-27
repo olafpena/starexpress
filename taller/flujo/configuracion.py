@@ -41,6 +41,8 @@ DOCTYPE = "Orden Taller"
 DOCTYPE_REGLAS = "Regla Transicion Taller"
 # La orden y el asesor de la agencia se capturan en el inventario (Firmas y conformidad)
 CONDICION_ORDEN_AGENCIA = "inventario and inventario.orden_agencia"
+# El vehículo (placas, VIN, marca...) también se captura en el inventario
+CONDICION_VEHICULO = "inventario and (inventario.placas or inventario.vin)"
 DOCTYPE_VEHICULO = "Vehiculo Taller"
 DOCTYPE_VALUACION = "Valuacion Taller"
 DOCTYPE_ESTATUS = "Estatus Orden Taller"
@@ -553,8 +555,8 @@ REGLAS_EJEMPLO = [
     {
         "descripcion": "Recepción: identificar el vehículo",
         "tipo_flujo": "Todos", "estado_destino": estado("Recepción", "Completado"),
-        "condicion": "doc.placas or doc.vin",
-        "mensaje": "Registra las placas o el VIN antes de completar la recepción.",
+        "condicion": CONDICION_VEHICULO,
+        "mensaje": "Registra en el inventario las placas o el VIN antes de completar la recepción.",
     },
     {
         "descripcion": "Aseguradora: siniestro autorizado antes de Carrocería",

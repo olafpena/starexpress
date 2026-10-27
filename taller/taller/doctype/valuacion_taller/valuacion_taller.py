@@ -24,7 +24,7 @@ from frappe.utils import flt
 
 from taller.erp.configuracion_empresa import ARTICULO_POR_TIPO
 from taller.erp.documentos import tasa_impuestos
-from taller.flujo.configuracion import TIPOS_CON_VALUACION
+from taller.flujo.configuracion import DOCTYPE_INVENTARIO, TIPOS_CON_VALUACION
 from taller.valuacion import audatex
 from taller.vehiculo.vin import revisar_vin
 
@@ -183,12 +183,7 @@ def aplicar_a_orden(val):
 
     orden.valuacion = val.name
     orden.valuacion_aprobada = 1
-    orden.flags.vin_externo = val.origen == "Audatex"
-    for campo in CAMPOS_VEHICULO:
-        if not orden.get(campo) and val.get(campo):
-            orden.set(campo, val.get(campo))
-    if not orden.vehiculo and (val.vin or val.placas):
-        orden.vehiculo = vehiculo_de(val, orden)
+    completar_inventario(val, orden)
 
     if orden.tipo_flujo == "Aseguradora":
         orden.numero_siniestro = orden.numero_siniestro or val.numero_reclamo or val.numero_expediente
@@ -264,6 +259,25 @@ def desligar_conceptos(orden_taller):
     frappe.db.sql("""update `tabConcepto Orden Taller` set de_valuacion = 0, partida_valuacion = null
                      where parenttype = %s and parent = %s and ifnull(partida_valuacion, '') != ''""",
                   (DOCTYPE_ORDEN, orden_taller))
+
+
+def completar_inventario(val, orden):
+    """El vehículo de la valuación llena lo vacío del inventario de la orden (ahí se captura)."""
+    if not orden.inventario:
+        return
+    inv = frappe.get_doc(DOCTYPE_INVENTARIO, orden.inventario)
+    cambios = {c: val.get(c) for c in CAMPOS_VEHICULO if not inv.get(c) and val.get(c)}
+    if not inv.vehiculo and (val.vin or val.placas):
+        cambios["vehiculo"] = vehiculo_de(val, orden)
+    if not cambios:
+        return
+    if inv.docstatus == 0:
+        inv.update(cambios)
+        inv.flags.vin_externo = val.origen == "Audatex"
+        inv.save(ignore_permissions=True)
+    else:
+        frappe.db.set_value(DOCTYPE_INVENTARIO, inv.name, cambios)
+    # La orden toma el vehículo y las placas del inventario al guardarse (aplicar_a_orden)
 
 
 def vehiculo_de(val, orden):

@@ -254,7 +254,8 @@ def mecanica_flujo_completo_con_contabilidad():
     recibir_inventario("MAT-PRIMER", 5, 200)
     o = orden(tipo_orden=MECANICA, vin=VIN_TOYOTA, conceptos=[{"item_code": "MO-HOJ", "qty": 2},
                                                               {"item_code": "MAT-PRIMER", "qty": 1}])
-    verifica(o.marca == "TOYOTA", "el VIN no prellenó la marca en Mecánica")
+    verifica(frappe.db.get_value(conf.DOCTYPE_INVENTARIO, o.inventario, "marca") == "TOYOTA",
+             "el VIN no prellenó la marca en el inventario de Mecánica")
     o = avanza(o, "Enviar a Recepción", "Completar", "Enviar a Diagnóstico")
     retrocede_inicio(o, "Diagnóstico", 1)
     bloquea(lambda: apply_workflow(o, "Completar"), "diagnóstico")
@@ -367,11 +368,14 @@ def cambio_de_tipo_de_orden():
 
 @caso
 def recepcion_pide_vehiculo_y_valuacion():
-    o = avanza(orden(), "Enviar a Recepción")
+    o = avanza(orden(inventario=False), "Enviar a Recepción")
     bloquea(lambda: apply_workflow(o, "Completar"), "valuación")
     o.reload()
-    o.placas = "REG2"
-    o.save()
+    bloquea(lambda: apply_workflow(o, "Completar"), "placas o el VIN")
+    o.reload()
+    levantar_inventario(o, placas="REG2")
+    o.reload()
+    verifica(o.placas == "REG2", f"las placas del inventario no pasaron a la orden: {o.placas}")
     valuacion_manual(o)
     o = avanza(o, "Completar")
     verifica(o.workflow_state == "Recepción - Completado", o.workflow_state)

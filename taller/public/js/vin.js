@@ -1,5 +1,5 @@
 // VIN: dígito verificador al capturar (offline) y prellenado con ultravin (servidor).
-// Se carga en Vehiculo Taller, Orden Taller y Valuacion Taller (hooks.py -> doctype_js);
+// Se carga en Vehiculo Taller, Inventario y Valuacion Taller (hooks.py -> doctype_js);
 // la bandera evita registrar los eventos más de una vez.
 if (!window.taller_vin) {
 	const VALORES = {};
@@ -70,7 +70,7 @@ if (!window.taller_vin) {
 		},
 	};
 
-	["Vehiculo Taller", "Orden Taller", "Valuacion Taller"].forEach((doctype) =>
+	["Vehiculo Taller", "Inventario", "Valuacion Taller"].forEach((doctype) =>
 		frappe.ui.form.on(doctype, { vin: (frm) => window.taller_vin.al_cambiar(frm) })
 	);
 }

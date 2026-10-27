@@ -22,13 +22,17 @@ from taller.flujo.configuracion import (
     recolecta,
 )
 from taller.fotos import procesar_fotos
+from taller.vehiculo.vin import revisar_vin
 
 # Datos que el inventario trae de la orden (además de los fetch_from del JSON,
 # que en el servidor solo corren al cambiar el Link)
 CAMPOS_DE_LA_ORDEN = ["tipo_orden", "tipo_flujo", "cliente", "cliente_nombre", "telefono", "email",
-                      "aseguradora", "direccion_recoleccion",
-                      "numero_siniestro", "vehiculo", "marca", "modelo", "anio", "color", "placas", "vin"]
+                      "aseguradora", "direccion_recoleccion", "numero_siniestro"]
 CAMPOS_AL_VEHICULO = ["numero_motor", "transmision"]
+# El vehículo se captura aquí; la orden guarda una copia del vehículo y las placas
+# para su lista, sus filtros y la búsqueda
+CAMPOS_VEHICULO = ["vehiculo", "marca", "modelo", "anio", "color", "placas", "vin"]
+CAMPOS_A_LA_ORDEN = ["vehiculo", "placas"]
 
 
 class Inventario(Document):
@@ -36,6 +40,7 @@ class Inventario(Document):
         self.validar_unico()
         self.validar_folio()
         self.traer_de_la_orden()
+        revisar_vin(self)
         procesar_fotos(self, etapa=self.momento)
 
     def validar_unico(self):
@@ -91,6 +96,13 @@ class Inventario(Document):
         # Al modificar (amend) un inventario cancelado, la orden apunta al nuevo
         frappe.db.set_value(DOCTYPE, self.orden_taller, "inventario", self.name, update_modified=False)
 
+    def on_update(self):
+        self.copiar_a_la_orden()
+
+    def copiar_a_la_orden(self):
+        frappe.db.set_value(DOCTYPE, self.orden_taller, {c: self.get(c) for c in CAMPOS_A_LA_ORDEN},
+                            update_modified=False)
+
     def on_submit(self):
         self.copiar_al_vehiculo()
         cambios = {}
@@ -129,8 +141,10 @@ def crear_inventario(orden):
     inventario = frappe.new_doc(DOCTYPE_INVENTARIO)
     inventario.orden_taller = orden.name
     inventario.momento = MOMENTO_RECOLECCION if recolecta(orden) else MOMENTO_RECEPCION
+    # Los datos del vehículo que traiga la orden nueva (copia, API, pruebas) pasan al inventario
+    inventario.update({c: orden.get(c) for c in CAMPOS_VEHICULO if orden.get(c)})
     for grupo, concepto in ACCESORIOS_INVENTARIO:
-        inventario.append("accesorios", {"grupo": grupo, "concepto": concepto})
+        inventario.append("accesorios", {"grupo": grupo, "concepto": concepto, "estado": "Sí"})
     inventario.insert(ignore_permissions=True)
     orden.db_set("inventario", inventario.name, update_modified=False)
     return inventario.name

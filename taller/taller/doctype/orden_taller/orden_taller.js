@@ -13,10 +13,6 @@ const TIPOS_CON_VALUACION = ["Hojalatería y Pintura", "Ambos"];
 frappe.ui.form.on("Orden Taller", {
 	setup(frm) {
 		frm.set_query("aseguradora", () => ({ filters: { customer_group: "Aseguradora" } }));
-		// En Agencia el cliente es la agencia, no el dueño del vehículo: sin filtro
-		frm.set_query("vehiculo", () => ({
-			filters: frm.doc.cliente && frm.doc.tipo_flujo !== "Agencia" ? { cliente: frm.doc.cliente } : {},
-		}));
 		frm.set_query("item_code", "conceptos", () => ({ filters: { disabled: 0, is_sales_item: 1 } }));
 	},
 	refresh(frm) {

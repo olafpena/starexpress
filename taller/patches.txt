@@ -18,3 +18,4 @@ taller.patches.v0_12.agencia_en_inventario
 taller.patches.v0_12.valuacion_ligada
 taller.patches.v0_12.danos_al_inventario
 taller.patches.v0_12.conceptos_de_valuacion
+taller.patches.v0_12.vehiculo_al_inventario

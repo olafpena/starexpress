@@ -28,17 +28,10 @@
   "total_horas_estimadas",
   "col_horas",
   "total_horas_reales",
-  "sec_vehiculo",
-  "vehiculo",
-  "marca",
-  "modelo",
-  "anio",
-  "col_vehiculo",
-  "color",
-  "placas",
-  "vin",
   "sec_inventario",
   "inventario",
+  "vehiculo",
+  "placas",
   "col_inventario",
   "kilometraje",
   "sec_mecanica",
@@ -218,64 +211,22 @@
    "options": "Paso Orden Taller"
   },
   {
-   "fieldname": "sec_vehiculo",
-   "fieldtype": "Section Break",
-   "label": "Vehículo"
-  },
-  {
    "fieldname": "vehiculo",
    "fieldtype": "Link",
-   "in_standard_filter": 1,
    "label": "Vehículo",
-   "options": "Vehiculo Taller"
+   "options": "Vehiculo Taller",
+   "read_only": 1,
+   "in_standard_filter": 1,
+   "description": "Se captura en el inventario."
   },
   {
-   "fetch_from": "vehiculo.marca",
-   "fetch_if_empty": 1,
-   "fieldname": "marca",
-   "fieldtype": "Data",
-   "label": "Marca"
-  },
-  {
-   "fetch_from": "vehiculo.modelo",
-   "fetch_if_empty": 1,
-   "fieldname": "modelo",
-   "fieldtype": "Data",
-   "label": "Modelo"
-  },
-  {
-   "fetch_from": "vehiculo.anio",
-   "fetch_if_empty": 1,
-   "fieldname": "anio",
-   "fieldtype": "Int",
-   "label": "Año"
-  },
-  {
-   "fieldname": "col_vehiculo",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fetch_from": "vehiculo.color",
-   "fetch_if_empty": 1,
-   "fieldname": "color",
-   "fieldtype": "Data",
-   "label": "Color"
-  },
-  {
-   "fetch_from": "vehiculo.placas",
-   "fetch_if_empty": 1,
    "fieldname": "placas",
    "fieldtype": "Data",
+   "label": "Placas",
+   "read_only": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Placas"
-  },
-  {
-   "fetch_from": "vehiculo.vin",
-   "fetch_if_empty": 1,
-   "fieldname": "vin",
-   "fieldtype": "Data",
-   "label": "VIN / Número de serie"
+   "description": "Se captura en el inventario."
   },
   {
    "depends_on": "eval:[\"Mecánica\",\"Ambos\"].includes(doc.tipo_orden)",
@@ -776,7 +727,7 @@
  ],
  "is_submittable": 1,
  "links": [],
- "modified": "2026-10-16 22:50:00.000000",
+ "modified": "2026-10-27 23:40:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Orden Taller",

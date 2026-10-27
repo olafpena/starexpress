@@ -23,9 +23,9 @@ after_install = "taller.flujo.configuracion.instalar"
 # Validación del VIN y prellenado (taller/vehiculo/vin.py) en los formularios con VIN
 doctype_js = {
     "Vehiculo Taller": "public/js/vin.js",
-    "Orden Taller": ["public/js/vin.js", "public/js/fotos.js"],
+    "Orden Taller": "public/js/fotos.js",
     "Valuacion Taller": "public/js/vin.js",
-    "Inventario": "public/js/fotos.js",
+    "Inventario": ["public/js/vin.js", "public/js/fotos.js"],
 }
 
 # Montos y documentos de ERPNext ligados a la Orden Taller (taller/erp/documentos.py)

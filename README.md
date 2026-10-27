@@ -143,7 +143,7 @@ Cada orden necesita una **Valuacion Taller** aprobada (enviada) para completar *
 Partidas: Refacción, Mano de obra hojalatería / pintura (cantidad en horas = UT ÷ UT por
 hora), Material de pintura / reparación y Otro, con descuento por partida.
 
-Al aprobarla, la orden recibe el vehículo (lo crea si no existe), en Aseguradora el
+Al aprobarla, el inventario de la orden recibe el vehículo (lo crea si no existe), en Aseguradora el
 siniestro, la póliza, la autorización y el monto autorizado, y las partidas pasan a los
 **conceptos** (artículos `MO-HOJ`, `MO-PINT`, `VAL-REF`, `VAL-MATP`, `VAL-MATR`, `VAL-OTRO`) si aún
 no hay orden de venta. Solo puede haber una valuación vigente por orden; para cambiarla se
@@ -151,7 +151,7 @@ cancela y se modifica (*amend*).
 
 ## VIN: dígito verificador y prellenado
 
-En **Vehiculo Taller**, **Orden Taller** y **Valuacion Taller** el VIN se normaliza
+En **Vehiculo Taller**, **Inventario** y **Valuacion Taller** el VIN se normaliza
 (mayúsculas, sin espacios ni guiones) y se revisa al capturarlo
 (`taller/vehiculo/vin.py` y `taller/public/js/vin.js`):
 
