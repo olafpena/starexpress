@@ -1,0 +1,81 @@
+{
+ "app": "taller",
+ "creation": "2026-10-28 16:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "wrench",
+ "icon_type": "Link",
+ "idx": 1,
+ "label": "Taller",
+ "link_to": "Taller",
+ "link_type": "Workspace Sidebar",
+ "modified": "2026-10-28 16:00:00.000000",
+ "modified_by": "Administrator",
+ "name": "Taller",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [
+  {
+   "doctype": "Has Role",
+   "role": "System Manager"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Jefe de Taller"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Asesor de Servicio"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Chofer"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Hojalatero"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Preparador"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Pintor"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Armador"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Pulidor"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Inspector de Calidad"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Mecánico"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Almacenista"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Lavador"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Cajero"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Facturista"
+  }
+ ],
+ "standard": 1
+}

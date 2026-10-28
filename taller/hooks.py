@@ -5,6 +5,18 @@ app_description = "Taller mecánico, hojalatería y pintura: Flujo Hojalatería 
 app_email = "ariel@example.com"
 app_license = "MIT"
 required_apps = ["erpnext"]
+app_home = "/desk/taller"
+
+# Taller en el selector de apps (/apps). El icono del escritorio, el menú lateral y la
+# pantalla de inicio están en desktop_icon/, workspace_sidebar/ y taller/workspace/ (bench migrate).
+add_to_apps_screen = [
+    {
+        "name": app_name,
+        "logo": "/assets/taller/images/taller-logo.svg",
+        "title": app_title,
+        "route": app_home,
+    }
+]
 
 # Crea roles, estados, acciones, permisos, el workflow y reglas de ejemplo.
 # Para regenerar: bench --site <sitio> execute taller.flujo.configuracion.instalar --kwargs "{'reconstruir': True}"
@@ -26,6 +38,10 @@ doctype_js = {
     "Orden Taller": "public/js/fotos.js",
     "Valuacion Taller": "public/js/vin.js",
     "Inventario": ["public/js/vin.js", "public/js/fotos.js"],
+    # Botón para regresar a la Orden Taller (public/js/documentos_erp.js)
+    "Quotation": "public/js/documentos_erp.js",
+    "Sales Order": "public/js/documentos_erp.js",
+    "Sales Invoice": "public/js/documentos_erp.js",
 }
 
 # Montos y documentos de ERPNext ligados a la Orden Taller (taller/erp/documentos.py)

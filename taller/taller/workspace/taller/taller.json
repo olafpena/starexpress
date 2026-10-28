@@ -1,0 +1,267 @@
+{
+ "app": "taller",
+ "charts": [],
+ "content": "[{\"id\": \"hdr-inicio\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Taller</b></span>\", \"col\": 12}}, {\"id\": \"sc-0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Órdenes activas\", \"col\": 4}}, {\"id\": \"sc-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"En proceso\", \"col\": 4}}, {\"id\": \"sc-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Facturas pendientes\", \"col\": 4}}, {\"id\": \"sc-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Nueva Orden Taller\", \"col\": 4}}, {\"id\": \"sc-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Inventario\", \"col\": 4}}, {\"id\": \"sc-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Valuación Taller\", \"col\": 4}}, {\"id\": \"sp-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-menu\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Menú</b></span>\", \"col\": 12}}, {\"id\": \"card-0\", \"type\": \"card\", \"data\": {\"card_name\": \"Operación\", \"col\": 4}}, {\"id\": \"card-1\", \"type\": \"card\", \"data\": {\"card_name\": \"Ventas\", \"col\": 4}}, {\"id\": \"card-2\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuración\", \"col\": 4}}]",
+ "creation": "2026-10-28 16:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "wrench",
+ "is_hidden": 0,
+ "label": "Taller",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Operación",
+   "link_count": 4,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Orden Taller",
+   "link_count": 0,
+   "link_to": "Orden Taller",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Inventario",
+   "link_count": 0,
+   "link_to": "Inventario",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Valuación Taller",
+   "link_count": 0,
+   "link_to": "Valuacion Taller",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vehículo Taller",
+   "link_count": 0,
+   "link_to": "Vehiculo Taller",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Ventas",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Cotización",
+   "link_count": 0,
+   "link_to": "Quotation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Orden de venta",
+   "link_count": 0,
+   "link_to": "Sales Order",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Factura de venta",
+   "link_count": 0,
+   "link_to": "Sales Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Configuración",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Estatus Orden Taller",
+   "link_count": 0,
+   "link_to": "Estatus Orden Taller",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Regla Transición Taller",
+   "link_count": 0,
+   "link_to": "Regla Transicion Taller",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Concepto Orden Taller",
+   "link_count": 0,
+   "link_to": "Concepto Orden Taller",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Zona de Carrocería",
+   "link_count": 0,
+   "link_to": "Zona de Carroceria",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daño de Carrocería",
+   "link_count": 0,
+   "link_to": "Danio de Carroceria",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-28 16:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Taller",
+ "name": "Taller",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "restrict_to_domain": "",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Jefe de Taller"
+  },
+  {
+   "role": "Asesor de Servicio"
+  },
+  {
+   "role": "Chofer"
+  },
+  {
+   "role": "Hojalatero"
+  },
+  {
+   "role": "Preparador"
+  },
+  {
+   "role": "Pintor"
+  },
+  {
+   "role": "Armador"
+  },
+  {
+   "role": "Pulidor"
+  },
+  {
+   "role": "Inspector de Calidad"
+  },
+  {
+   "role": "Mecánico"
+  },
+  {
+   "role": "Almacenista"
+  },
+  {
+   "role": "Lavador"
+  },
+  {
+   "role": "Cajero"
+  },
+  {
+   "role": "Facturista"
+  }
+ ],
+ "sequence_id": 50.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "format": "{} activas",
+   "label": "Órdenes activas",
+   "link_to": "Orden Taller",
+   "stats_filter": "[[\"Orden Taller\", \"estatus\", \"=\", \"Activo\", false], [\"Orden Taller\", \"docstatus\", \"<\", 2, false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "format": "{} en proceso",
+   "label": "En proceso",
+   "link_to": "Orden Taller",
+   "stats_filter": "[[\"Orden Taller\", \"workflow_state\", \"like\", \"%En Proceso%\", false], [\"Orden Taller\", \"docstatus\", \"<\", 2, false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Red",
+   "doc_view": "List",
+   "format": "{} por cobrar",
+   "label": "Facturas pendientes",
+   "link_to": "Sales Invoice",
+   "stats_filter": "[[\"Sales Invoice\", \"orden_taller\", \"is\", \"set\", false], [\"Sales Invoice\", \"docstatus\", \"=\", 1, false], [\"Sales Invoice\", \"outstanding_amount\", \">\", 0, false]]",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "label": "Nueva Orden Taller",
+   "type": "URL",
+   "url": "/desk/orden-taller/new"
+  },
+  {
+   "doc_view": "List",
+   "label": "Inventario",
+   "link_to": "Inventario",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "List",
+   "label": "Valuación Taller",
+   "link_to": "Valuacion Taller",
+   "type": "DocType"
+  }
+ ],
+ "title": "Taller",
+ "type": "Workspace"
+}
