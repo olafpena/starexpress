@@ -1,0 +1,12 @@
+# Imagen de ERPNext con la app "taller" de este repo. Contexto: la raíz del repo
+# (docker/compose.yml). Para otra versión de ERPNext cambia BASE_IMAGE aquí y la
+# etiqueta de la imagen en compose.yml.
+ARG BASE_IMAGE=frappe/erpnext:v16.37.0
+FROM ${BASE_IMAGE}
+
+USER frappe
+WORKDIR /home/frappe/frappe-bench
+
+COPY --chown=frappe:0 . apps/taller
+RUN env/bin/pip install --no-cache-dir -e apps/taller \
+  && chmod -R g=u apps/taller

@@ -7,8 +7,15 @@ App de Frappe (v14/v15) con el DocType **Orden Taller**, el workflow
 
 ```bash
 cd frappe-bench
-bench get-app /ruta/a/taller        # o la URL de tu repo
+bench get-app https://github.com/olafpena/starexpress
 bench --site <sitio> install-app taller
+```
+
+Entorno local con Docker (ERPNext + esta app en http://localhost:8080): ver
+[docker/README.md](docker/README.md).
+
+```bash
+cd docker && docker compose up -d --build
 ```
 
 `after_install` crea: 13 roles, 37 Workflow States, 21 acciones, permisos, el workflow
