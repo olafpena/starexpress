@@ -2,7 +2,7 @@
  "app": "taller",
  "charts": [],
  "content": "[{\"id\": \"hdr-inicio\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Taller</b></span>\", \"col\": 12}}, {\"id\": \"sc-0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Órdenes activas\", \"col\": 4}}, {\"id\": \"sc-1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"En proceso\", \"col\": 4}}, {\"id\": \"sc-2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Facturas pendientes\", \"col\": 4}}, {\"id\": \"sc-3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Nueva Orden Taller\", \"col\": 4}}, {\"id\": \"sc-4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Inventario\", \"col\": 4}}, {\"id\": \"sc-5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Valuación Taller\", \"col\": 4}}, {\"id\": \"sp-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-menu\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Menú</b></span>\", \"col\": 12}}, {\"id\": \"card-0\", \"type\": \"card\", \"data\": {\"card_name\": \"Operación\", \"col\": 4}}, {\"id\": \"card-1\", \"type\": \"card\", \"data\": {\"card_name\": \"Ventas\", \"col\": 4}}, {\"id\": \"card-2\", \"type\": \"card\", \"data\": {\"card_name\": \"Configuración\", \"col\": 4}}]",
- "creation": "2026-10-28 16:00:00.000000",
+ "creation": "2026-10-28 17:00:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
  "doctype": "Workspace",
@@ -102,9 +102,19 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Configuración",
-   "link_count": 5,
+   "link_count": 6,
    "onboard": 0,
    "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Configuración Taller",
+   "link_count": 0,
+   "link_to": "Configuracion Taller",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
   },
   {
    "hidden": 0,
@@ -157,7 +167,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-28 16:00:00.000000",
+ "modified": "2026-10-28 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "Taller",
  "name": "Taller",

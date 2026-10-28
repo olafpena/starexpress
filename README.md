@@ -211,13 +211,21 @@ proyecto pasa a *Completed* al cerrar la orden y a *Cancelled* si se cancela.
 
 `taller/erp/configuracion_empresa.py` deja la compañía lista: cuentas por defecto, banco,
 formas de pago, IVA por defecto, centro de costo y almacén del taller, grupos de cliente y un
-catálogo básico de servicios y materiales con precios de referencia. Es idempotente:
+catálogo básico de servicios y materiales con precios de referencia. Es idempotente.
+
+Desde el Desk (sin terminal, sirve en Frappe Cloud): **Taller > Configuración >
+Configuración Taller**. Elige la compañía; las cuentas con el nombre sugerido se proponen
+solas y las que falten se eligen a mano. Luego el botón **Configurar compañía** (solo
+System Manager).
+
+Desde la terminal, con las cuentas sugeridas (`CUENTAS_SUGERIDAS`, sin el sufijo de la
+compañía) o las que pases en `cuentas`:
 
 ```bash
-bench --site <sitio> execute taller.erp.configuracion_empresa.configurar --kwargs "{'company': 'StarExpress'}"
+bench --site <sitio> execute taller.erp.configuracion_empresa.configurar --kwargs "{'company': 'Mi Taller'}"
 ```
 
-Las cuentas están en `CUENTAS` (sin el sufijo de la compañía); revísalas con tu contador.
+Si falta alguna cuenta, el mensaje lista todas las que hay que elegir. Revísalas con tu contador.
 
 ## Agregar reglas de transición
 

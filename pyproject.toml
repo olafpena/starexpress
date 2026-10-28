@@ -1,6 +1,6 @@
 [project]
 name = "taller"
-authors = [{ name = "Ariel Peña", email = "ariel@example.com" }]
+authors = [{ name = "Ariel Peña", email = "olafpena@gmail.com" }]
 description = "Taller mecánico, hojalatería y pintura para Frappe"
 requires-python = ">=3.10"
 readme = "README.md"

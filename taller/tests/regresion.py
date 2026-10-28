@@ -187,6 +187,16 @@ def gl(voucher):
     return {f.account.rsplit(" - ", 1)[0]: flt(f.debit) - flt(f.credit) for f in filas}
 
 
+def cuentas_de(si):
+    """Cuentas de la factura sin el sufijo de la compañía: por cobrar, costo e inventario
+    (las que haya elegido Configuracion Taller, no un nombre fijo)."""
+    sin_sufijo = lambda cuenta: (cuenta or "").rsplit(" - ", 1)[0]
+    fila = si.items[0]
+    inventario = (frappe.db.get_value("Warehouse", fila.warehouse, "account")
+                  or frappe.get_cached_value("Company", si.company, "default_inventory_account"))
+    return sin_sufijo(si.debit_to), sin_sufijo(fila.expense_account), sin_sufijo(inventario)
+
+
 def hasta_cobro(o):
     """Recorre el flujo de Hojalatería y Pintura desde Nueva hasta Cobro - En Proceso."""
     return avanza(o, "Enviar a Recepción", "Completar", "Enviar a Carrocería", "Completar",
@@ -306,7 +316,8 @@ def mecanica_flujo_completo_con_contabilidad():
     si = enviar("Sales Invoice", documentos.crear_facturas(o.name)[0])
     verifica(flt(si.grand_total) == esperado and si.update_stock, f"factura {si.grand_total} update_stock={si.update_stock}")
     asiento = gl(si.name)
-    verifica(asiento.get("CUENTAS POR COBRAR CLIENTES") == esperado and asiento.get("COSTO DE VENTAS") == 200,
+    cxc, costo, _inventario = cuentas_de(si)
+    verifica(asiento.get(cxc) == esperado and asiento.get(costo) == 200,
              f"asiento {asiento}")
     pagar(o)
     o.reload()
@@ -399,9 +410,10 @@ def flujo_completo_particular_con_contabilidad():
     si = enviar("Sales Invoice", documentos.crear_facturas(o.name)[0])
     verifica(si.update_stock and si.advances and flt(si.advances[0].allocated_amount) == 1000, "anticipo o inventario no aplicados")
     asiento = gl(si.name)
-    verifica(asiento.get("CUENTAS POR COBRAR CLIENTES") == flt(si.grand_total), f"CxC {asiento}")
+    cxc, costo, inventario = cuentas_de(si)
+    verifica(asiento.get(cxc) == flt(si.grand_total), f"CxC {asiento}")
     verifica(asiento.get("IVA") == -flt(si.total_taxes_and_charges), f"IVA {asiento}")
-    verifica(asiento.get("COSTO DE VENTAS") == 600 and asiento.get("INVENTARIOS") == -600, f"costo {asiento}")
+    verifica(asiento.get(costo) == 600 and asiento.get(inventario) == -600, f"costo {asiento}")
     pagar(o)
     o.reload()
     verifica(o.facturado and flt(o.saldo_pendiente) == 0, f"facturado={o.facturado} saldo={o.saldo_pendiente}")

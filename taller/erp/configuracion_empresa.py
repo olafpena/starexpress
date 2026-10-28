@@ -1,29 +1,44 @@
 """
 Fase 0: deja la compañía de ERPNext lista para facturar el taller.
 
-Es idempotente; se puede correr las veces que haga falta:
+Es idempotente; se puede correr las veces que haga falta. Desde el Desk:
+Taller > Configuración > Configuracion Taller (elige compañía y cuentas, botón
+"Configurar compañía"). Desde la terminal:
 
-    bench --site <sitio> execute taller.erp.configuracion_empresa.configurar --kwargs "{'company': 'StarExpress'}"
+    bench --site <sitio> execute taller.erp.configuracion_empresa.configurar --kwargs "{'company': 'Mi Taller'}"
 
-Las cuentas se indican sin el sufijo " - <abreviatura>" de la compañía; revísalas
-con tu contador antes de usarlas en otra compañía o plan de cuentas.
+Sin `cuentas`, cada cuenta se busca por su nombre sugerido (CUENTAS_SUGERIDAS, sin
+el sufijo " - <abreviatura>"); revísalas con tu contador antes de usarlas en otra
+compañía o plan de cuentas.
 """
 
 import frappe
+from frappe import _
 
-# Cuentas de la compañía (sin sufijo de abreviatura)
-CUENTAS = {
-    "default_receivable_account": "CUENTAS POR COBRAR CLIENTES",
-    "default_payable_account": "CUENTAS POR PAGAR PROVEEDORES",
-    "default_income_account": "VENTAS NACIONALES",
-    "round_off_account": "OTROS EGRESOS",
-    "default_bank_account": "BANCO X MXN",
+# Cuentas que usa el taller: clave -> (etiqueta, nombre sugerido sin sufijo de abreviatura)
+CUENTAS_SUGERIDAS = {
+    "cobrar": ("Cuentas por cobrar", "CUENTAS POR COBRAR CLIENTES"),
+    "pagar": ("Cuentas por pagar", "CUENTAS POR PAGAR PROVEEDORES"),
+    "ventas": ("Ingreso por materiales", "VENTAS NACIONALES"),
+    "servicios": ("Ingreso por servicios", "INGRESOS POR SERVICIOS 1"),
+    "costo": ("Costo de ventas", "COSTO DE VENTAS"),
+    "redondeo": ("Redondeo", "OTROS EGRESOS"),
+    "caja": ("Caja", "CAJA PRINCIPAL"),
+    "banco": ("Banco", "BANCO X MXN"),
 }
-CUENTA_INGRESO_SERVICIOS = "INGRESOS POR SERVICIOS 1"
-CUENTA_INGRESO_MATERIALES = "VENTAS NACIONALES"
-CUENTA_COSTO = "COSTO DE VENTAS"  # costo de materiales vendidos y consumidos
-CUENTA_CAJA = "CAJA PRINCIPAL"
-CUENTA_BANCO = "BANCO X MXN"
+# Campos de la compañía -> clave de la cuenta
+CUENTAS = {
+    "default_receivable_account": "cobrar",
+    "default_payable_account": "pagar",
+    "default_income_account": "ventas",
+    "round_off_account": "redondeo",
+    "default_bank_account": "banco",
+}
+CUENTA_INGRESO_SERVICIOS = "servicios"
+CUENTA_INGRESO_MATERIALES = "ventas"
+CUENTA_COSTO = "costo"  # costo de materiales vendidos y consumidos
+CUENTA_CAJA = "caja"
+CUENTA_BANCO = "banco"
 
 # Formas de pago estándar de ERPNext -> cuenta
 FORMAS_PAGO = {
@@ -121,16 +136,44 @@ def actividad(paso):
     return f"Taller - {paso}"
 
 
-def configurar(company="StarExpress"):
+def cuentas_sugeridas(company):
+    """Cuentas sugeridas que existen en la compañía: clave -> nombre de la cuenta."""
     abbr = frappe.db.get_value("Company", company, "abbr")
-    if not abbr:
-        frappe.throw(f"No existe la compañía {company}")
-
-    def cuenta(nombre):
+    encontradas = {}
+    for clave, (_etiqueta, nombre) in CUENTAS_SUGERIDAS.items():
         nombre_completo = f"{nombre} - {abbr}"
-        if not frappe.db.exists("Account", {"name": nombre_completo, "company": company}):
-            frappe.throw(f"No existe la cuenta {nombre_completo}")
-        return nombre_completo
+        if frappe.db.exists("Account", {"name": nombre_completo, "company": company}):
+            encontradas[clave] = nombre_completo
+    return encontradas
+
+
+def resolver_cuentas(company, cuentas=None):
+    """Cuenta de cada clave: la elegida en `cuentas` o la sugerida. Si falta alguna, un
+    solo mensaje con todas las que faltan."""
+    elegidas = {**cuentas_sugeridas(company), **{k: v for k, v in (cuentas or {}).items() if v}}
+    faltan = [CUENTAS_SUGERIDAS[k][0] for k in CUENTAS_SUGERIDAS if not elegidas.get(k)]
+    ajenas = [v for k, v in elegidas.items() if k in CUENTAS_SUGERIDAS
+              and frappe.db.get_value("Account", v, "company") != company]
+    if faltan or ajenas:
+        mensaje = []
+        if faltan:
+            mensaje.append(_("Elige las cuentas de la compañía {0}: {1}").format(company, ", ".join(faltan)))
+        if ajenas:
+            mensaje.append(_("Estas cuentas no son de la compañía {0}: {1}").format(company, ", ".join(ajenas)))
+        frappe.throw("<br>".join(mensaje), title=_("Faltan cuentas"))
+    return elegidas
+
+
+def configurar(company=None, cuentas=None):
+    company = company or frappe.defaults.get_global_default("company")
+    abbr = frappe.db.get_value("Company", company, "abbr") if company else None
+    if not abbr:
+        frappe.throw(_("No existe la compañía {0}").format(company or ""))
+
+    elegidas = resolver_cuentas(company, cuentas)
+
+    def cuenta(clave):
+        return elegidas[clave]
 
     frappe.db.set_value("Account", cuenta(CUENTA_BANCO), "account_type", "Bank")
 
@@ -138,8 +181,8 @@ def configurar(company="StarExpress"):
     almacen = crear_almacen(company, abbr)
 
     empresa = frappe.get_doc("Company", company)
-    for campo, nombre in CUENTAS.items():
-        empresa.set(campo, cuenta(nombre))
+    for campo, clave in CUENTAS.items():
+        empresa.set(campo, cuenta(clave))
     empresa.round_off_cost_center = empresa.round_off_cost_center or empresa.cost_center
     empresa.save(ignore_permissions=True)
 
@@ -152,8 +195,8 @@ def configurar(company="StarExpress"):
     globales.save(ignore_permissions=True)
     asignar_almacen_predeterminado(company, almacen)
 
-    for forma, nombre in FORMAS_PAGO.items():
-        asignar_cuenta_forma_pago(forma, company, cuenta(nombre))
+    for forma, clave in FORMAS_PAGO.items():
+        asignar_cuenta_forma_pago(forma, company, cuenta(clave))
 
     plantilla = frappe.db.get_value("Sales Taxes and Charges Template",
                                     {"company": company, "disabled": 0}, "name")
@@ -193,6 +236,7 @@ def configurar(company="StarExpress"):
 
     frappe.db.commit()
     print(f"Compañía {company} configurada para el taller.")
+    return elegidas
 
 
 def asignar_almacen_predeterminado(company, almacen):

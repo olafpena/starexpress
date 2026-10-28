@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "creation": "2026-10-28 17:00:00.000000",
+ "modified": "2026-10-28 17:00:00.000000",
+ "modified_by": "Administrator",
+ "owner": "Administrator",
+ "doctype": "DocType",
+ "name": "Configuracion Taller",
+ "module": "Taller",
+ "issingle": 1,
+ "engine": "InnoDB",
+ "editable_grid": 0,
+ "track_changes": 1,
+ "links": [],
+ "states": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "field_order": [
+  "company",
+  "seccion_cuentas",
+  "cuenta_por_cobrar",
+  "cuenta_por_pagar",
+  "cuenta_ingreso_materiales",
+  "cuenta_ingreso_servicios",
+  "columna_cuentas",
+  "cuenta_costo",
+  "cuenta_redondeo",
+  "cuenta_caja",
+  "cuenta_banco",
+  "seccion_resultado",
+  "configurado_el"
+ ],
+ "fields": [
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Compañía",
+   "options": "Company",
+   "reqd": 1,
+   "description": "Compañía de ERPNext que factura el taller."
+  },
+  {
+   "fieldname": "seccion_cuentas",
+   "fieldtype": "Section Break",
+   "label": "Cuentas",
+   "description": "Al elegir la compañía se proponen las cuentas con el nombre sugerido. Revísalas con tu contador."
+  },
+  {
+   "fieldname": "cuenta_por_cobrar",
+   "fieldtype": "Link",
+   "label": "Cuentas por cobrar",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cuenta_por_pagar",
+   "fieldtype": "Link",
+   "label": "Cuentas por pagar",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cuenta_ingreso_materiales",
+   "fieldtype": "Link",
+   "label": "Ingreso por materiales",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cuenta_ingreso_servicios",
+   "fieldtype": "Link",
+   "label": "Ingreso por servicios",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "columna_cuentas",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cuenta_costo",
+   "fieldtype": "Link",
+   "label": "Costo de ventas",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cuenta_redondeo",
+   "fieldtype": "Link",
+   "label": "Redondeo",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cuenta_caja",
+   "fieldtype": "Link",
+   "label": "Caja",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cuenta_banco",
+   "fieldtype": "Link",
+   "label": "Banco",
+   "options": "Account",
+   "reqd": 1
+  },
+  {
+   "fieldname": "seccion_resultado",
+   "fieldtype": "Section Break",
+   "label": "Última configuración"
+  },
+  {
+   "fieldname": "configurado_el",
+   "fieldtype": "Datetime",
+   "label": "Configurado el",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "print": 1,
+   "share": 1,
+   "email": 1
+  }
+ ]
+}
